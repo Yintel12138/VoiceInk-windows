@@ -143,6 +143,24 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
     return true;
   });
 
+  // --- Whisper Binary Management ---
+  ipcMain.handle('whisper:binaryInfo', () => {
+    return whisperService.getWhisperBinaryInfo();
+  });
+
+  ipcMain.handle('whisper:downloadBinary', async (_event, releaseTag?: string) => {
+    try {
+      const binaryPath = await whisperService.downloadWhisperBinary(releaseTag);
+      return { success: true, path: binaryPath };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle('whisper:isBinaryAvailable', () => {
+    return whisperService.isWhisperBinaryAvailable();
+  });
+
   // --- AI Enhancement ---
   ipcMain.handle(IPC_CHANNELS.ENHANCEMENT_TOGGLE, (_event, enabled?: boolean) => {
     if (enabled !== undefined) {

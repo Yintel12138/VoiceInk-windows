@@ -167,6 +167,9 @@ app.whenReady().then(() => {
     windowManager,
   });
 
+  // Register audio IPC handlers for receiving audio data from renderer
+  audioService.registerIPCHandlers();
+
   // Create tray
   createTray();
 

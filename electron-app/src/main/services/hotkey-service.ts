@@ -299,6 +299,12 @@ export class HotkeyService {
    * Convert HotkeyOption to Electron accelerator string.
    *
    * Electron accelerator format: https://www.electronjs.org/docs/latest/api/accelerator
+   *
+   * Platform-specific mappings:
+   * - macOS: Uses Option/Command modifier keys
+   * - Windows: Uses Alt/Win modifier keys
+   * - Linux: Uses Alt/Super modifier keys
+   *
    * Note: Some modifier-only keys (CapsLock, Fn) cannot be directly registered
    * with Electron's globalShortcut and require alternative approaches.
    */
@@ -306,14 +312,39 @@ export class HotkeyService {
     switch (option) {
       case 'capsLock':
         // CapsLock cannot be registered as a global shortcut directly.
-        // Use Alt+CapsLock as a workaround.
-        return 'Alt+CapsLock';
+        // Use platform-specific workarounds.
+        if (process.platform === 'darwin') {
+          return 'Alt+CapsLock';
+        } else if (process.platform === 'win32') {
+          return 'Alt+CapsLock';
+        } else {
+          // Linux: Alt+CapsLock
+          return 'Alt+CapsLock';
+        }
       case 'rightOption':
-        // Right Option/Alt key - use a combination
-        return 'Alt+Shift+V';
+        // Right Option/Alt key - platform-specific combinations
+        if (process.platform === 'darwin') {
+          // macOS: Right Option + V
+          return 'Alt+Shift+V';
+        } else if (process.platform === 'win32') {
+          // Windows: Right Alt + V (AltGr on some keyboards)
+          return 'Alt+Shift+V';
+        } else {
+          // Linux: Alt+Shift+V
+          return 'Alt+Shift+V';
+        }
       case 'fn':
-        // Fn key is not directly accessible. Use F13 as alternative.
-        return 'F13';
+        // Fn key is not directly accessible on most platforms.
+        if (process.platform === 'darwin') {
+          // macOS: F13 as alternative
+          return 'F13';
+        } else if (process.platform === 'win32') {
+          // Windows: F13 (available on extended keyboards)
+          return 'F13';
+        } else {
+          // Linux: F13
+          return 'F13';
+        }
       case 'custom':
         return customAccelerator || null;
       case 'none':

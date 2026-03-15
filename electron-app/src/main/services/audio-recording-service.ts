@@ -2,24 +2,29 @@
  * AudioRecordingService - Manages audio capture from input devices.
  * Mirrors VoiceInk/CoreAudioRecorder.swift + Recorder.swift.
  *
- * Uses Electron's desktopCapturer for device enumeration and
- * spawns a renderer-side MediaRecorder via a hidden utility window,
- * or uses node-record-lpcm16 / mic for direct PCM capture.
+ * Cross-platform architecture (macOS, Windows, Linux):
+ * The renderer process captures audio via navigator.mediaDevices.getUserMedia()
+ * (works identically on all platforms), then sends PCM chunks to the main process
+ * via IPC for Whisper processing.
  *
- * For cross-platform compatibility, we use the Web Audio API approach:
- * The renderer process captures audio via navigator.mediaDevices.getUserMedia(),
- * and sends PCM chunks to the main process via IPC for Whisper processing.
+ * Platform-specific notes:
+ * - macOS: Microphone access requires entitlement in Info.plist
+ * - Windows: Microphone access handled by Windows privacy settings
+ * - Linux: Depends on PulseAudio/PipeWire/ALSA availability
  *
  * Main process responsibilities:
  * - Device enumeration (forwarded from renderer)
  * - Recording state management
  * - Audio file management (WAV output)
  * - Audio level broadcasting
+ * - IPC registration for receiving audio data from renderer
  */
 import { BrowserWindow, ipcMain } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { RecordingState, AudioDevice, AudioLevel } from '../../shared/types';
+
+const PLATFORM = process.platform;
 
 export class AudioRecordingService {
   private state: RecordingState = 'idle';
@@ -31,12 +36,41 @@ export class AudioRecordingService {
   private stateListeners: Array<(state: RecordingState) => void> = [];
   private audioLevelListeners: Array<(level: AudioLevel) => void> = [];
   private completeListeners: Array<(filePath: string, duration: number) => void> = [];
+  private ipcRegistered: boolean = false;
+  private useRealAudioLevels: boolean = false;
 
   constructor(outputDir: string) {
     this.outputDir = outputDir;
     if (!fs.existsSync(this.outputDir)) {
       fs.mkdirSync(this.outputDir, { recursive: true });
     }
+  }
+
+  /**
+   * Register IPC handlers for receiving audio data and levels from the renderer.
+   * Must be called once during app initialization (after app.whenReady()).
+   *
+   * IPC channels registered:
+   * - 'audio:chunk' — receives PCM audio data buffers from renderer MediaRecorder
+   * - 'audio:level' — receives real audio level data from renderer AnalyserNode
+   *
+   * Works identically on macOS, Windows, and Linux.
+   */
+  registerIPCHandlers(): void {
+    if (this.ipcRegistered) return;
+
+    ipcMain.on('audio:chunk', (_event, chunk: Buffer) => {
+      this.receiveAudioChunk(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+
+    ipcMain.on('audio:level', (_event, level: AudioLevel) => {
+      if (level && typeof level.averagePower === 'number' && typeof level.peakPower === 'number') {
+        this.useRealAudioLevels = true;
+        this.updateAudioLevel(level);
+      }
+    });
+
+    this.ipcRegistered = true;
   }
 
   /**
@@ -314,13 +348,17 @@ export class AudioRecordingService {
 
   /**
    * Simulate audio level updates during recording.
-   * In production, real levels come from the renderer's AnalyserNode via IPC.
+   * Only used as fallback when renderer is not sending real audio levels.
+   * Real levels come from the renderer's AnalyserNode via IPC ('audio:level' channel).
    */
   private startAudioLevelSimulation(): void {
+    this.useRealAudioLevels = false;
     this.audioLevelInterval = setInterval(() => {
       if (this.state !== 'recording') return;
+      // Skip simulation if we're getting real audio levels from renderer
+      if (this.useRealAudioLevels) return;
 
-      // Generate simulated audio levels (will be replaced by real data from renderer)
+      // Generate simulated audio levels (fallback when renderer doesn't send real data)
       const level: AudioLevel = {
         averagePower: 0.1 + Math.random() * 0.3,
         peakPower: 0.2 + Math.random() * 0.4,

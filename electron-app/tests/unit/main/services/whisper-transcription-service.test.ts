@@ -9,15 +9,21 @@ import {
   WhisperTranscriptionService,
   WhisperTextFormatter,
   PREDEFINED_MODELS,
+  getWhisperBinaryName,
+  getWhisperReleaseAssetName,
+  getPlatformBinarySearchPaths,
+  getPlatformBinaryNames,
 } from '../../../../src/main/services/whisper-transcription-service';
 
 describe('WhisperTranscriptionService', () => {
   let service: WhisperTranscriptionService;
   let tempDir: string;
+  let modelsDir: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'voiceink-whisper-test-'));
-    service = new WhisperTranscriptionService(tempDir);
+    modelsDir = path.join(tempDir, 'models');
+    service = new WhisperTranscriptionService(modelsDir);
   });
 
   afterEach(() => {
@@ -74,7 +80,7 @@ describe('WhisperTranscriptionService', () => {
 
     it('should detect downloaded models', () => {
       // Create a fake model file
-      const modelPath = path.join(tempDir, 'ggml-tiny.bin');
+      const modelPath = path.join(modelsDir, 'ggml-tiny.bin');
       fs.writeFileSync(modelPath, 'fake model data');
 
       const models = service.listModels();
@@ -89,7 +95,7 @@ describe('WhisperTranscriptionService', () => {
     });
 
     it('should return true for downloaded models', () => {
-      fs.writeFileSync(path.join(tempDir, 'ggml-tiny.bin'), 'data');
+      fs.writeFileSync(path.join(modelsDir, 'ggml-tiny.bin'), 'data');
       expect(service.isModelDownloaded('whisper-tiny')).toBe(true);
     });
   });
@@ -97,18 +103,18 @@ describe('WhisperTranscriptionService', () => {
   describe('getModelPath', () => {
     it('should return correct path for known models', () => {
       const modelPath = service.getModelPath('whisper-tiny');
-      expect(modelPath).toBe(path.join(tempDir, 'ggml-tiny.bin'));
+      expect(modelPath).toBe(path.join(modelsDir, 'ggml-tiny.bin'));
     });
 
     it('should return fallback path for unknown models', () => {
       const modelPath = service.getModelPath('unknown-model');
-      expect(modelPath).toBe(path.join(tempDir, 'unknown-model.bin'));
+      expect(modelPath).toBe(path.join(modelsDir, 'unknown-model.bin'));
     });
   });
 
   describe('deleteModel', () => {
     it('should delete a downloaded model file', () => {
-      const modelPath = path.join(tempDir, 'ggml-tiny.bin');
+      const modelPath = path.join(modelsDir, 'ggml-tiny.bin');
       fs.writeFileSync(modelPath, 'data');
 
       const result = service.deleteModel('whisper-tiny');
@@ -149,22 +155,22 @@ describe('WhisperTranscriptionService', () => {
 
     it('should throw error when audio file does not exist', async () => {
       service.selectModel('whisper-tiny');
-      fs.writeFileSync(path.join(tempDir, 'ggml-tiny.bin'), 'data');
+      fs.writeFileSync(path.join(modelsDir, 'ggml-tiny.bin'), 'data');
       await expect(service.transcribe('/nonexistent/audio.wav')).rejects.toThrow(
         'Audio file not found'
       );
     });
 
-    it('should return placeholder text when no native addon is available', async () => {
+    it('should throw error when no transcription engine is available', async () => {
       service.selectModel('whisper-tiny');
-      fs.writeFileSync(path.join(tempDir, 'ggml-tiny.bin'), 'model data');
+      fs.writeFileSync(path.join(modelsDir, 'ggml-tiny.bin'), 'model data');
 
-      const audioFile = path.join(tempDir, 'test-audio.wav');
+      const audioFile = path.join(modelsDir, 'test-audio.wav');
       fs.writeFileSync(audioFile, 'fake audio data');
 
-      const result = await service.transcribe(audioFile);
-      expect(result.text).toContain('placeholder');
-      expect(result.duration).toBeGreaterThanOrEqual(0);
+      await expect(service.transcribe(audioFile)).rejects.toThrow(
+        'No whisper.cpp transcription engine available'
+      );
     });
   });
 
@@ -176,7 +182,7 @@ describe('WhisperTranscriptionService', () => {
     });
 
     it('should return path if model is already downloaded', async () => {
-      const modelPath = path.join(tempDir, 'ggml-tiny.bin');
+      const modelPath = path.join(modelsDir, 'ggml-tiny.bin');
       fs.writeFileSync(modelPath, 'data');
 
       const result = await service.downloadModel('whisper-tiny');
@@ -196,6 +202,125 @@ describe('WhisperTranscriptionService', () => {
       const unsubscribe = service.onDownloadProgress(listener);
       expect(typeof unsubscribe).toBe('function');
       unsubscribe();
+    });
+  });
+
+  describe('cross-platform binary management', () => {
+    it('should create bin directory alongside models directory', () => {
+      const binDir = path.join(path.dirname(tempDir), 'bin');
+      expect(fs.existsSync(binDir) || fs.existsSync(service.getBinDir())).toBe(true);
+    });
+
+    it('should report binary as unavailable when not downloaded', () => {
+      expect(service.isWhisperBinaryAvailable()).toBe(false);
+    });
+
+    it('should return binary info with platform details', () => {
+      const info = service.getWhisperBinaryInfo();
+      expect(info.available).toBe(false);
+      expect(info.path).toBeNull();
+      expect(info.platform).toBe(process.platform);
+      expect(info.arch).toBe(process.arch);
+    });
+
+    it('should detect binary when placed in bin directory', () => {
+      const binDir = service.getBinDir();
+      const binaryName = getWhisperBinaryName();
+      const binaryPath = path.join(binDir, binaryName);
+      fs.writeFileSync(binaryPath, 'fake binary');
+
+      expect(service.isWhisperBinaryAvailable()).toBe(true);
+      const info = service.getWhisperBinaryInfo();
+      expect(info.available).toBe(true);
+      expect(info.path).toBe(binaryPath);
+    });
+
+    it('should find binary using findWhisperBinary', () => {
+      const binDir = service.getBinDir();
+      const binaryName = getWhisperBinaryName();
+      const binaryPath = path.join(binDir, binaryName);
+      fs.writeFileSync(binaryPath, 'fake binary');
+
+      const found = service.findWhisperBinary();
+      expect(found).toBe(binaryPath);
+    });
+  });
+});
+
+describe('Cross-platform helper functions', () => {
+  describe('getWhisperBinaryName', () => {
+    it('should return a string binary name', () => {
+      const name = getWhisperBinaryName();
+      expect(typeof name).toBe('string');
+      expect(name.length).toBeGreaterThan(0);
+    });
+
+    it('should have .exe extension on Windows', () => {
+      const name = getWhisperBinaryName();
+      if (process.platform === 'win32') {
+        expect(name).toMatch(/\.exe$/);
+      } else {
+        expect(name).not.toMatch(/\.exe$/);
+      }
+    });
+  });
+
+  describe('getWhisperReleaseAssetName', () => {
+    it('should return a platform-specific archive name', () => {
+      const name = getWhisperReleaseAssetName();
+      expect(typeof name).toBe('string');
+      expect(name).toContain('whisper-bin');
+    });
+
+    it('should contain the current platform name', () => {
+      const name = getWhisperReleaseAssetName();
+      const platformMap: Record<string, string> = {
+        darwin: 'darwin',
+        win32: 'win',
+        linux: 'linux',
+      };
+      const expectedPlatform = platformMap[process.platform] || process.platform;
+      expect(name).toContain(expectedPlatform);
+    });
+  });
+
+  describe('getPlatformBinarySearchPaths', () => {
+    it('should return an array of paths', () => {
+      const paths = getPlatformBinarySearchPaths('/tmp/test');
+      expect(Array.isArray(paths)).toBe(true);
+      expect(paths.length).toBeGreaterThan(0);
+    });
+
+    it('should include the base bin directory', () => {
+      const paths = getPlatformBinarySearchPaths('/tmp/test');
+      expect(paths).toContain(path.join('/tmp/test', 'bin'));
+    });
+  });
+
+  describe('getPlatformBinaryNames', () => {
+    it('should return an array of binary names', () => {
+      const names = getPlatformBinaryNames();
+      expect(Array.isArray(names)).toBe(true);
+      expect(names.length).toBeGreaterThan(0);
+    });
+
+    it('should include whisper-cli variant', () => {
+      const names = getPlatformBinaryNames();
+      const hasWhisperCli = names.some((n) => n.startsWith('whisper-cli'));
+      expect(hasWhisperCli).toBe(true);
+    });
+
+    it('should have .exe extensions on Windows', () => {
+      const names = getPlatformBinaryNames();
+      if (process.platform === 'win32') {
+        for (const name of names) {
+          expect(name).toMatch(/\.exe$/);
+        }
+      } else {
+        for (const name of names) {
+          expect(name).not.toMatch(/\.exe$/);
+        }
+      }
     });
   });
 });

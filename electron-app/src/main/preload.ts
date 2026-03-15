@@ -90,6 +90,14 @@ const api = {
     },
   },
 
+  // --- Whisper Binary ---
+  whisper: {
+    getBinaryInfo: () => ipcRenderer.invoke('whisper:binaryInfo'),
+    downloadBinary: (releaseTag?: string) =>
+      ipcRenderer.invoke('whisper:downloadBinary', releaseTag),
+    isBinaryAvailable: () => ipcRenderer.invoke('whisper:isBinaryAvailable'),
+  },
+
   // --- AI Enhancement ---
   enhancement: {
     toggle: (enabled?: boolean) =>
@@ -131,6 +139,10 @@ const api = {
     listDevices: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DEVICES_LIST),
     selectDevice: (deviceId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DEVICE_SELECT, deviceId),
+    sendChunk: (chunk: ArrayBuffer) =>
+      ipcRenderer.send('audio:chunk', Buffer.from(chunk)),
+    sendLevel: (level: { averagePower: number; peakPower: number }) =>
+      ipcRenderer.send('audio:level', level),
     onDevicesChanged: (callback: (devices: unknown) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, devices: unknown) => {
         callback(devices);

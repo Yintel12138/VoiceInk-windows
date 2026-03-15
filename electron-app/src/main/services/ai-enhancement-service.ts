@@ -392,6 +392,9 @@ export class AIEnhancementService {
   /**
    * Enhance text using the selected AI provider and prompt.
    * This is the main method called after transcription.
+   *
+   * Includes retry with exponential backoff for transient failures.
+   * Works cross-platform (macOS, Windows, Linux) since it uses standard HTTP APIs.
    */
   async enhance(text: string, context?: string): Promise<EnhancementResult> {
     if (!this.isEnabled) {
@@ -422,37 +425,55 @@ export class AIEnhancementService {
     }
 
     const startTime = Date.now();
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-    try {
-      let enhancedText: string;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        let enhancedText: string;
 
-      if (this.selectedProviderId === 'anthropic') {
-        enhancedText = await this.makeAnthropicRequest(
-          provider.baseURL,
-          apiKey,
-          this.selectedModelId,
-          systemMessage,
-          userMessage
-        );
-      } else {
-        enhancedText = await this.makeOpenAIRequest(
-          provider.baseURL,
-          apiKey,
-          this.selectedModelId,
-          systemMessage,
-          userMessage
-        );
+        if (this.selectedProviderId === 'anthropic') {
+          enhancedText = await this.makeAnthropicRequest(
+            provider.baseURL,
+            apiKey,
+            this.selectedModelId,
+            systemMessage,
+            userMessage
+          );
+        } else {
+          enhancedText = await this.makeOpenAIRequest(
+            provider.baseURL,
+            apiKey,
+            this.selectedModelId,
+            systemMessage,
+            userMessage
+          );
+        }
+
+        const duration = (Date.now() - startTime) / 1000;
+        return {
+          enhancedText: enhancedText.trim(),
+          duration,
+          model: this.selectedModelId,
+        };
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        // Don't retry on authentication errors (4xx) — they won't succeed
+        const errMsg = lastError.message;
+        if (errMsg.includes('(401)') || errMsg.includes('(403)') || errMsg.includes('(422)')) {
+          break;
+        }
+
+        // Exponential backoff before retry
+        if (attempt < maxRetries - 1) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise((r) => setTimeout(r, delay));
+        }
       }
-
-      const duration = (Date.now() - startTime) / 1000;
-      return {
-        enhancedText: enhancedText.trim(),
-        duration,
-        model: this.selectedModelId,
-      };
-    } catch (err) {
-      throw new Error(`Enhancement failed: ${err}`);
     }
+
+    throw new Error(`Enhancement failed after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
   // --- Private HTTP Methods ---
