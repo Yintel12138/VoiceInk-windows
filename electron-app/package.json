@@ -62,6 +62,7 @@
     },
     "files": [
       "dist/**/*",
+      "public/**/*",
       "package.json"
     ],
     "mac": {
@@ -78,6 +79,7 @@
       ]
     },
     "linux": {
+      "category": "Utility",
       "target": [
         "AppImage",
         "deb"

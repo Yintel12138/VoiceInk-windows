@@ -47,7 +47,7 @@ export class WindowManager {
       title: 'VoiceInk',
       show: false,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
+        preload: path.join(__dirname, '../preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
       },
@@ -79,7 +79,7 @@ export class WindowManager {
     if (this.isDev) {
       this.mainWindow.loadURL('http://localhost:5173');
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../../../renderer/index.html'));
     }
 
     return this.mainWindow;
@@ -113,7 +113,7 @@ export class WindowManager {
       focusable: false,
       show: false,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
+        preload: path.join(__dirname, '../preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
       },
@@ -128,7 +128,7 @@ export class WindowManager {
       this.miniRecorderWindow.loadURL('http://localhost:5173/#/mini-recorder');
     } else {
       this.miniRecorderWindow.loadFile(
-        path.join(__dirname, '../renderer/index.html'),
+        path.join(__dirname, '../../../renderer/index.html'),
         { hash: '/mini-recorder' }
       );
     }
@@ -164,7 +164,7 @@ export class WindowManager {
       height: 600,
       title: 'Transcription History',
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
+        preload: path.join(__dirname, '../preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
       },
@@ -182,7 +182,7 @@ export class WindowManager {
       this.historyWindow.loadURL('http://localhost:5173/#/history');
     } else {
       this.historyWindow.loadFile(
-        path.join(__dirname, '../renderer/index.html'),
+        path.join(__dirname, '../../../renderer/index.html'),
         { hash: '/history' }
       );
     }
