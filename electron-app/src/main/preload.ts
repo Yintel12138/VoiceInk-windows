@@ -31,6 +31,8 @@ const api = {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_LIST),
     get: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_GET, id),
     delete: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_DELETE, id),
+    start: (filePath: string, language?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.TRANSCRIPTION_START, filePath, language),
     onComplete: (callback: (transcription: unknown) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, transcription: unknown) => {
         callback(transcription);
@@ -69,6 +71,73 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.RECORDER_AUDIO_LEVEL, listener);
       return () =>
         ipcRenderer.removeListener(IPC_CHANNELS.RECORDER_AUDIO_LEVEL, listener);
+    },
+  },
+
+  // --- Models ---
+  models: {
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.MODEL_LIST),
+    download: (modelId: string) => ipcRenderer.invoke(IPC_CHANNELS.MODEL_DOWNLOAD, modelId),
+    delete: (modelId: string) => ipcRenderer.invoke(IPC_CHANNELS.MODEL_DELETE, modelId),
+    select: (modelId: string) => ipcRenderer.invoke(IPC_CHANNELS.MODEL_SELECT, modelId),
+    onDownloadProgress: (callback: (progress: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, progress: unknown) => {
+        callback(progress);
+      };
+      ipcRenderer.on(IPC_CHANNELS.MODEL_DOWNLOAD_PROGRESS, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.MODEL_DOWNLOAD_PROGRESS, listener);
+    },
+  },
+
+  // --- AI Enhancement ---
+  enhancement: {
+    toggle: (enabled?: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ENHANCEMENT_TOGGLE, enabled),
+    setPrompt: (promptId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ENHANCEMENT_SET_PROMPT, promptId),
+    setProvider: (providerId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ENHANCEMENT_SET_PROVIDER, providerId),
+    setModel: (modelId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ENHANCEMENT_SET_MODEL, modelId),
+    getProviders: () => ipcRenderer.invoke('enhancement:getProviders'),
+    getPrompts: () => ipcRenderer.invoke('enhancement:getPrompts'),
+    addPrompt: (prompt: { name: string; systemPrompt: string; userPromptTemplate: string }) =>
+      ipcRenderer.invoke('enhancement:addPrompt', prompt),
+    updatePrompt: (id: string, updates: Record<string, unknown>) =>
+      ipcRenderer.invoke('enhancement:updatePrompt', id, updates),
+    deletePrompt: (id: string) =>
+      ipcRenderer.invoke('enhancement:deletePrompt', id),
+    saveApiKey: (providerId: string, apiKey: string) =>
+      ipcRenderer.invoke('enhancement:saveApiKey', providerId, apiKey),
+    getApiKey: (providerId: string) =>
+      ipcRenderer.invoke('enhancement:getApiKey', providerId),
+    hasApiKey: (providerId: string) =>
+      ipcRenderer.invoke('enhancement:hasApiKey', providerId),
+    verifyApiKey: (providerId: string, apiKey: string) =>
+      ipcRenderer.invoke('enhancement:verifyApiKey', providerId, apiKey),
+    onResult: (callback: (result: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, result: unknown) => {
+        callback(result);
+      };
+      ipcRenderer.on(IPC_CHANNELS.ENHANCEMENT_RESULT, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.ENHANCEMENT_RESULT, listener);
+    },
+  },
+
+  // --- Audio Devices ---
+  audio: {
+    listDevices: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DEVICES_LIST),
+    selectDevice: (deviceId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DEVICE_SELECT, deviceId),
+    onDevicesChanged: (callback: (devices: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, devices: unknown) => {
+        callback(devices);
+      };
+      ipcRenderer.on(IPC_CHANNELS.AUDIO_DEVICES_CHANGED, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.AUDIO_DEVICES_CHANGED, listener);
     },
   },
 

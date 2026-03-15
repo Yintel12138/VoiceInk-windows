@@ -6,11 +6,16 @@
  *
  * Uses Electron's contextBridge + ipcMain/ipcRenderer for secure communication.
  */
-import { ipcMain, app, shell, clipboard } from 'electron';
+import { ipcMain, app, shell } from 'electron';
 import { IPC_CHANNELS } from '../../shared/constants/ipc-channels';
 import { SettingsService } from '../services/settings-service';
 import { TranscriptionStore } from '../services/transcription-store';
 import { DictionaryService } from '../services/dictionary-service';
+import { AudioRecordingService } from '../services/audio-recording-service';
+import { WhisperTranscriptionService } from '../services/whisper-transcription-service';
+import { AIEnhancementService } from '../services/ai-enhancement-service';
+import { HotkeyService } from '../services/hotkey-service';
+import { TranscriptionPipeline } from '../services/transcription-pipeline';
 import { WindowManager } from '../managers/window-manager';
 import { AppDefaultKey } from '../../shared/constants';
 
@@ -18,11 +23,26 @@ export interface IPCDependencies {
   settingsService: SettingsService;
   transcriptionStore: TranscriptionStore;
   dictionaryService: DictionaryService;
+  audioService: AudioRecordingService;
+  whisperService: WhisperTranscriptionService;
+  aiService: AIEnhancementService;
+  hotkeyService: HotkeyService;
+  pipeline: TranscriptionPipeline;
   windowManager: WindowManager;
 }
 
 export function registerIPCHandlers(deps: IPCDependencies): void {
-  const { settingsService, transcriptionStore, dictionaryService, windowManager } = deps;
+  const {
+    settingsService,
+    transcriptionStore,
+    dictionaryService,
+    audioService,
+    whisperService,
+    aiService,
+    hotkeyService,
+    pipeline,
+    windowManager,
+  } = deps;
 
   // --- Settings ---
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, (_event, key: AppDefaultKey) => {
@@ -51,6 +71,32 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
     return true;
   });
 
+  // --- Recording ---
+  ipcMain.handle(IPC_CHANNELS.RECORDER_TOGGLE, async () => {
+    await pipeline.toggleRecording();
+    return audioService.getState();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.RECORDER_START, async () => {
+    await pipeline.startRecording();
+    return audioService.getState();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.RECORDER_STOP, async () => {
+    await pipeline.stopAndProcess();
+    return audioService.getState();
+  });
+
+  // --- Audio Devices ---
+  ipcMain.handle(IPC_CHANNELS.AUDIO_DEVICES_LIST, async () => {
+    return audioService.listDevices();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.AUDIO_DEVICE_SELECT, (_event, deviceId: string) => {
+    audioService.selectDevice(deviceId);
+    return true;
+  });
+
   // --- Transcriptions ---
   ipcMain.handle(IPC_CHANNELS.TRANSCRIPTION_LIST, () => {
     return transcriptionStore.getAll();
@@ -62,6 +108,109 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
 
   ipcMain.handle(IPC_CHANNELS.TRANSCRIPTION_DELETE, (_event, id: string) => {
     return transcriptionStore.delete(id);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.TRANSCRIPTION_START, async (_event, filePath: string, language?: string) => {
+    try {
+      const result = await pipeline.transcribeFile(filePath, language);
+      return { success: true, ...result };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  });
+
+  // --- AI Models ---
+  ipcMain.handle(IPC_CHANNELS.MODEL_LIST, () => {
+    return whisperService.listModels();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.MODEL_DOWNLOAD, async (_event, modelId: string) => {
+    try {
+      const modelPath = await whisperService.downloadModel(modelId);
+      return { success: true, path: modelPath };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.MODEL_DELETE, (_event, modelId: string) => {
+    return whisperService.deleteModel(modelId);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.MODEL_SELECT, (_event, modelId: string) => {
+    whisperService.selectModel(modelId);
+    settingsService.set('selectedTranscriptionModelId', modelId);
+    return true;
+  });
+
+  // --- AI Enhancement ---
+  ipcMain.handle(IPC_CHANNELS.ENHANCEMENT_TOGGLE, (_event, enabled?: boolean) => {
+    if (enabled !== undefined) {
+      aiService.setEnabled(enabled);
+      settingsService.set('isEnhancementEnabled', enabled);
+    } else {
+      const current = aiService.getEnabled();
+      aiService.setEnabled(!current);
+      settingsService.set('isEnhancementEnabled', !current);
+    }
+    return aiService.getEnabled();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ENHANCEMENT_SET_PROMPT, (_event, promptId: string) => {
+    aiService.setActivePrompt(promptId);
+    settingsService.set('selectedEnhancementPromptId', promptId);
+    return true;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ENHANCEMENT_SET_PROVIDER, (_event, providerId: string) => {
+    aiService.setProvider(providerId);
+    settingsService.set('selectedAIProvider', providerId);
+    return true;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ENHANCEMENT_SET_MODEL, (_event, modelId: string) => {
+    aiService.setModel(modelId);
+    settingsService.set('selectedAIModel', modelId);
+    return true;
+  });
+
+  // --- Enhancement Prompt CRUD (using extension channels) ---
+  ipcMain.handle('enhancement:getProviders', () => {
+    return aiService.getProviders();
+  });
+
+  ipcMain.handle('enhancement:getPrompts', () => {
+    return aiService.getPrompts();
+  });
+
+  ipcMain.handle('enhancement:addPrompt', (_event, prompt: { name: string; systemPrompt: string; userPromptTemplate: string }) => {
+    return aiService.addPrompt(prompt);
+  });
+
+  ipcMain.handle('enhancement:updatePrompt', (_event, id: string, updates: Record<string, unknown>) => {
+    return aiService.updatePrompt(id, updates as never);
+  });
+
+  ipcMain.handle('enhancement:deletePrompt', (_event, id: string) => {
+    return aiService.deletePrompt(id);
+  });
+
+  // --- API Key Management ---
+  ipcMain.handle('enhancement:saveApiKey', (_event, providerId: string, apiKey: string) => {
+    aiService.saveApiKey(providerId, apiKey);
+    return true;
+  });
+
+  ipcMain.handle('enhancement:getApiKey', (_event, providerId: string) => {
+    return aiService.getApiKey(providerId);
+  });
+
+  ipcMain.handle('enhancement:hasApiKey', (_event, providerId: string) => {
+    return aiService.hasApiKey(providerId);
+  });
+
+  ipcMain.handle('enhancement:verifyApiKey', async (_event, providerId: string, apiKey: string) => {
+    return aiService.verifyApiKey(providerId, apiKey);
   });
 
   // --- Dictionary ---
@@ -141,5 +290,25 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
 
   ipcMain.handle(IPC_CHANNELS.APP_OPEN_EXTERNAL, (_event, url: string) => {
     return shell.openExternal(url);
+  });
+
+  // --- Model Download Progress ---
+  whisperService.onDownloadProgress((progress) => {
+    const mainWin = windowManager.getMainWindow();
+    if (mainWin && !mainWin.isDestroyed()) {
+      mainWin.webContents.send(IPC_CHANNELS.MODEL_DOWNLOAD_PROGRESS, progress);
+    }
+  });
+
+  // --- Audio Level Updates ---
+  audioService.onAudioLevel((level) => {
+    const mainWin = windowManager.getMainWindow();
+    if (mainWin && !mainWin.isDestroyed()) {
+      mainWin.webContents.send(IPC_CHANNELS.RECORDER_AUDIO_LEVEL, level);
+    }
+    const miniWin = windowManager.getMiniRecorderWindow();
+    if (miniWin && !miniWin.isDestroyed()) {
+      miniWin.webContents.send(IPC_CHANNELS.RECORDER_AUDIO_LEVEL, level);
+    }
   });
 }
