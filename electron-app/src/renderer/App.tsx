@@ -14,6 +14,11 @@ import { DictionaryView } from './views/DictionaryView';
 import { ModelsView } from './views/ModelsView';
 import { EnhancementView } from './views/EnhancementView';
 import { MiniRecorderView } from './views/MiniRecorderView';
+import { TranscribeAudioView } from './views/TranscribeAudioView';
+import { PowerModeView } from './views/PowerModeView';
+import { PermissionsView } from './views/PermissionsView';
+import { AudioInputView } from './views/AudioInputView';
+import { LicenseView } from './views/LicenseView';
 import type { ViewType } from '../shared/types';
 
 export const App: React.FC = () => {
@@ -84,15 +89,15 @@ const ContentArea: React.FC<ContentAreaProps> = ({ currentView }) => {
     case 'enhancement':
       return <EnhancementView />;
     case 'transcribeAudio':
-      return <div className="view-placeholder">Transcribe Audio</div>;
+      return <TranscribeAudioView />;
     case 'powerMode':
-      return <div className="view-placeholder">Power Mode</div>;
+      return <PowerModeView />;
     case 'permissions':
-      return <div className="view-placeholder">Permissions</div>;
+      return <PermissionsView />;
     case 'audioInput':
-      return <div className="view-placeholder">Audio Input</div>;
+      return <AudioInputView />;
     case 'license':
-      return <div className="view-placeholder">License</div>;
+      return <LicenseView />;
     default:
       return <MetricsView />;
   }

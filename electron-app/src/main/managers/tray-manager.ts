@@ -5,10 +5,11 @@
  * Provides quick access to:
  * - Toggle recording
  * - Model selection
- * - AI enhancement settings
+ * - AI enhancement settings (toggle + prompt selection)
+ * - Power Mode selection
  * - Language selection
  * - Audio input device
- * - History, Settings, Quit
+ * - History, Settings, About, Quit
  *
  * Platform differences:
  * - macOS: Shows as a menu bar extra (status item) in the top menu bar
@@ -29,6 +30,14 @@ export interface TrayManagerCallbacks {
   onCheckUpdate: () => void;
   onToggleEnhancement: () => void;
   onSelectLanguage: (lang: string) => void;
+  onOpenModels?: () => void;
+  onOpenAudioInput?: () => void;
+  onOpenPowerMode?: () => void;
+  onOpenLicense?: () => void;
+  onOpenPermissions?: () => void;
+  onSelectModel?: (modelId: string) => void;
+  onSelectPrompt?: (promptId: string) => void;
+  onSelectPowerMode?: (modeId: string) => void;
 }
 
 export class TrayManager {
@@ -85,24 +94,54 @@ export class TrayManager {
     const selectedLanguage = this.settingsService.get('selectedLanguage');
 
     const template: Electron.MenuItemConstructorOptions[] = [
+      // Recording control
       {
         label: this.getRecordingLabel(),
         click: () => this.callbacks.onToggleRecording(),
         accelerator: 'CommandOrControl+Shift+R',
       },
       { type: 'separator' },
+
+      // Model selection
+      {
+        label: 'Transcription Model',
+        submenu: this.buildModelSubmenu(),
+      },
+
+      // AI Enhancement
       {
         label: 'AI Enhancement',
         type: 'checkbox',
         checked: isEnhancementEnabled,
         click: () => this.callbacks.onToggleEnhancement(),
       },
+      {
+        label: 'Enhancement Prompt',
+        submenu: this.buildPromptSubmenu(),
+      },
       { type: 'separator' },
+
+      // Power Mode
+      {
+        label: 'Power Mode',
+        submenu: this.buildPowerModeSubmenu(),
+      },
+      { type: 'separator' },
+
+      // Language
       {
         label: 'Language',
         submenu: this.buildLanguageSubmenu(selectedLanguage),
       },
+
+      // Audio Input
+      {
+        label: 'Audio Input',
+        click: () => this.callbacks.onOpenAudioInput?.(),
+      },
       { type: 'separator' },
+
+      // Navigation
       {
         label: 'History',
         click: () => this.callbacks.onOpenHistory(),
@@ -113,7 +152,17 @@ export class TrayManager {
         click: () => this.callbacks.onOpenSettings(),
         accelerator: 'CommandOrControl+,',
       },
+      {
+        label: 'Permissions',
+        click: () => this.callbacks.onOpenPermissions?.(),
+      },
+      {
+        label: 'License',
+        click: () => this.callbacks.onOpenLicense?.(),
+      },
       { type: 'separator' },
+
+      // App controls
       {
         label: 'Show Main Window',
         click: () => this.callbacks.onShowMainWindow(),
@@ -121,6 +170,10 @@ export class TrayManager {
       {
         label: 'Check for Updates',
         click: () => this.callbacks.onCheckUpdate(),
+      },
+      {
+        label: `About VoiceInk v${app.getVersion()}`,
+        enabled: false,
       },
       { type: 'separator' },
       {
@@ -140,6 +193,23 @@ export class TrayManager {
   updateRecordingState(state: RecordingState): void {
     this.currentState = state;
     this.updateContextMenu();
+
+    // Update tray tooltip with current state
+    if (this.tray) {
+      switch (state) {
+        case 'recording':
+          this.tray.setToolTip('VoiceInk - Recording...');
+          break;
+        case 'transcribing':
+          this.tray.setToolTip('VoiceInk - Transcribing...');
+          break;
+        case 'enhancing':
+          this.tray.setToolTip('VoiceInk - Enhancing...');
+          break;
+        default:
+          this.tray.setToolTip('VoiceInk');
+      }
+    }
   }
 
   /**
@@ -163,6 +233,77 @@ export class TrayManager {
     }
   }
 
+  private buildModelSubmenu(): Electron.MenuItemConstructorOptions[] {
+    // Predefined models - in a real implementation these would come from settings
+    const models = [
+      { id: 'whisper-tiny', name: 'Whisper Tiny' },
+      { id: 'whisper-base', name: 'Whisper Base' },
+      { id: 'whisper-small', name: 'Whisper Small' },
+      { id: 'whisper-medium', name: 'Whisper Medium' },
+      { id: 'whisper-large-v3', name: 'Whisper Large v3' },
+      { id: 'parakeet-tdt-0.6b', name: 'Parakeet TDT 0.6B' },
+    ];
+
+    const items: Electron.MenuItemConstructorOptions[] = models.map(m => ({
+      label: m.name,
+      type: 'radio' as const,
+      checked: false, // Would check against current setting
+      click: () => this.callbacks.onSelectModel?.(m.id),
+    }));
+
+    items.push(
+      { type: 'separator' },
+      {
+        label: 'Manage Models...',
+        click: () => this.callbacks.onOpenModels?.(),
+      },
+    );
+
+    return items;
+  }
+
+  private buildPromptSubmenu(): Electron.MenuItemConstructorOptions[] {
+    const prompts = [
+      { id: 'fix-grammar', name: 'Fix Grammar' },
+      { id: 'professional', name: 'Professional Tone' },
+      { id: 'casual', name: 'Casual Tone' },
+      { id: 'summarize', name: 'Summarize' },
+    ];
+
+    return prompts.map(p => ({
+      label: p.name,
+      type: 'radio' as const,
+      checked: false,
+      click: () => this.callbacks.onSelectPrompt?.(p.id),
+    }));
+  }
+
+  private buildPowerModeSubmenu(): Electron.MenuItemConstructorOptions[] {
+    const modes = [
+      { id: 'none', name: 'None (Default)' },
+      { id: 'email', name: '📧 Email', emoji: '📧' },
+      { id: 'code', name: '💻 Code', emoji: '💻' },
+      { id: 'chat', name: '💬 Chat', emoji: '💬' },
+    ];
+
+    const items: Electron.MenuItemConstructorOptions[] = modes.map(m => ({
+      label: m.name,
+      type: 'radio' as const,
+      checked: m.id === 'none',
+      click: () => this.callbacks.onSelectPowerMode?.(m.id),
+    }));
+
+    items.push(
+      { type: 'separator' },
+      {
+        label: 'Manage Power Modes...',
+        click: () => this.callbacks.onOpenPowerMode?.(),
+      },
+    );
+
+    return items;
+  }
+
   private buildLanguageSubmenu(
     selectedLanguage: string
   ): Electron.MenuItemConstructorOptions[] {
@@ -179,6 +320,7 @@ export class TrayManager {
       { code: 'it', name: 'Italian' },
       { code: 'ar', name: 'Arabic' },
       { code: 'hi', name: 'Hindi' },
+      { code: 'auto', name: 'Auto-detect' },
     ];
 
     return languages.map((lang) => ({
