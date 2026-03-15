@@ -55,8 +55,10 @@ export class TrayManager {
    * Create the system tray icon and context menu.
    */
   create(): void {
-    // Use a simple icon - in production, this would be the app icon
-    const iconPath = path.join(__dirname, '../../public/tray-icon.png');
+    // Use a simple icon - resolve relative to app root for both dev and production
+    const iconPath = app.isPackaged
+      ? path.join(app.getAppPath(), 'public', 'tray-icon.png')
+      : path.join(__dirname, '../../../../public/tray-icon.png');
     let icon: Electron.NativeImage;
     try {
       icon = nativeImage.createFromPath(iconPath);
