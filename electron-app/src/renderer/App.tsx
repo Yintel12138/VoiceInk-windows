@@ -3,6 +3,7 @@
  * Mirrors VoiceInk/Views/ContentView.swift - the main tabbed navigation hub.
  *
  * Uses HashRouter for Electron file:// protocol compatibility.
+ * Shows the onboarding wizard on first launch (mirrors OnboardingView.swift).
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
@@ -19,10 +20,30 @@ import { PowerModeView } from './views/PowerModeView';
 import { PermissionsView } from './views/PermissionsView';
 import { AudioInputView } from './views/AudioInputView';
 import { LicenseView } from './views/LicenseView';
+import { OnboardingView } from './views/OnboardingView';
 import type { ViewType } from '../shared/types';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('metrics');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+
+  // Check if onboarding has been completed
+  useEffect(() => {
+    if (window.voiceink?.settings?.get) {
+      window.voiceink.settings
+        .get('hasCompletedOnboarding')
+        .then((value: unknown) => {
+          setShowOnboarding(!value);
+          setOnboardingChecked(true);
+        })
+        .catch(() => {
+          setOnboardingChecked(true);
+        });
+    } else {
+      setOnboardingChecked(true);
+    }
+  }, []);
 
   // Listen for navigation commands from main process
   useEffect(() => {
@@ -38,8 +59,24 @@ export const App: React.FC = () => {
     setCurrentView(view);
   }, []);
 
+  const handleOnboardingComplete = useCallback(() => {
+    // Mark onboarding as completed
+    if (window.voiceink?.settings?.set) {
+      window.voiceink.settings.set('hasCompletedOnboarding', true);
+    }
+    setShowOnboarding(false);
+  }, []);
+
+  // Wait until we've checked onboarding status
+  if (!onboardingChecked) {
+    return null;
+  }
+
   return (
     <HashRouter>
+      {showOnboarding && (
+        <OnboardingView onComplete={handleOnboardingComplete} />
+      )}
       <Routes>
         <Route
           path="/"

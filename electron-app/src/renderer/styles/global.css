@@ -1865,3 +1865,510 @@ body {
 .toggle-small {
   transform: scale(0.8);
 }
+
+/* ============================================================
+   ONBOARDING WIZARD
+   Mirrors VoiceInk/Views/Onboarding/OnboardingView.swift
+   ============================================================ */
+
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.onboarding-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    #0a0a1a 0%,
+    #1a1a3e 25%,
+    #0f1629 50%,
+    #1a0a2e 75%,
+    #0a0a1a 100%
+  );
+}
+
+.onboarding-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(102, 126, 234, 0.4), transparent),
+    radial-gradient(2px 2px at 40% 70%, rgba(102, 126, 234, 0.3), transparent),
+    radial-gradient(2px 2px at 60% 40%, rgba(168, 85, 247, 0.3), transparent),
+    radial-gradient(2px 2px at 80% 80%, rgba(102, 126, 234, 0.2), transparent),
+    radial-gradient(1px 1px at 10% 60%, rgba(255, 255, 255, 0.15), transparent),
+    radial-gradient(1px 1px at 70% 20%, rgba(255, 255, 255, 0.1), transparent),
+    radial-gradient(1px 1px at 90% 50%, rgba(255, 255, 255, 0.1), transparent);
+  animation: onboarding-particles-drift 20s ease-in-out infinite;
+}
+
+@keyframes onboarding-particles-drift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-10px, 15px); }
+  50% { transform: translate(5px, -10px); }
+  75% { transform: translate(15px, 5px); }
+}
+
+.onboarding-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.15), transparent 70%);
+  animation: onboarding-glow-pulse 4s ease-in-out infinite;
+}
+
+@keyframes onboarding-glow-pulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+.onboarding-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  padding: 40px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.onboarding-container.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.onboarding-container.fade-out {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Progress dots */
+.onboarding-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.onboarding-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.onboarding-progress-dot.active {
+  background: var(--accent);
+  transform: scale(1.2);
+}
+
+/* Step content */
+.onboarding-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.onboarding-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  animation: onboarding-icon-bounce 2s ease-in-out infinite;
+}
+
+@keyframes onboarding-icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.complete-icon {
+  animation: onboarding-complete-pop 0.5s ease-out;
+}
+
+@keyframes onboarding-complete-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.onboarding-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.onboarding-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0 0 32px;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+/* Button overrides for onboarding */
+.onboarding-overlay .btn-lg {
+  padding: 12px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  min-width: 200px;
+}
+
+.onboarding-overlay .btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 8px 16px;
+  transition: color var(--transition);
+}
+
+.onboarding-overlay .btn-ghost:hover {
+  color: var(--text-secondary);
+}
+
+/* --- Typewriter --- */
+.typewriter-container {
+  font-size: 20px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  min-height: 32px;
+}
+
+.typewriter-prefix {
+  color: var(--text-secondary);
+}
+
+.typewriter-text {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.typewriter-cursor {
+  color: var(--accent);
+  animation: cursor-blink 0.8s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* --- Welcome features --- */
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+  animation: welcome-features-in 0.5s ease-out;
+}
+
+@keyframes welcome-features-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.welcome-feature-icon {
+  font-size: 18px;
+}
+
+/* --- Permission Cards --- */
+.permission-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.permission-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition);
+}
+
+.permission-card.granted {
+  border-color: var(--success);
+}
+
+.permission-card-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.permission-card-info {
+  flex: 1;
+  text-align: left;
+}
+
+.permission-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.permission-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.permission-card-action {
+  flex-shrink: 0;
+}
+
+.permission-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.permission-status.granted {
+  color: var(--success);
+}
+
+.permission-status.info {
+  color: var(--text-muted);
+}
+
+/* --- Model Selection --- */
+.model-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.model-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent);
+}
+
+.model-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.model-option.downloaded {
+  border-color: var(--success);
+}
+
+.model-option-radio {
+  font-size: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.model-option-info {
+  flex: 1;
+  text-align: left;
+}
+
+.model-option-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.model-option-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.model-option-size {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.model-option-badge {
+  font-size: 11px;
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Download progress */
+.download-progress {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 16px;
+}
+
+.download-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.download-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #a855f7);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.download-progress-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* --- Tutorial Cards --- */
+.tutorial-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.tutorial-card {
+  display: flex;
+  gap: 16px;
+  text-align: left;
+}
+
+.tutorial-step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tutorial-card-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.tutorial-card-content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tutorial-card-content kbd {
+  display: inline;
+  padding: 1px 6px;
+  font-size: 12px;
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+/* --- Complete Step --- */
+.complete-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.complete-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.complete-tip-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.confetti-animation {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  background-image:
+    radial-gradient(3px 3px at 20% 20%, #667eea, transparent),
+    radial-gradient(3px 3px at 40% 40%, #22c55e, transparent),
+    radial-gradient(3px 3px at 60% 30%, #f59e0b, transparent),
+    radial-gradient(3px 3px at 80% 50%, #ef4444, transparent),
+    radial-gradient(3px 3px at 30% 60%, #a855f7, transparent),
+    radial-gradient(3px 3px at 70% 70%, #3b82f6, transparent);
+  animation: confetti-fall 2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(100px) scale(1.5); opacity: 0; }
+}
