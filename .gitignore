@@ -99,4 +99,11 @@ Icon
 .AppleDesktop
 Network Trash Folder
 Temporary Items
-.apdisk 
+.apdisk
+
+# Electron app
+electron-app/node_modules/
+electron-app/dist/
+electron-app/release/
+electron-app/coverage/
+electron-app/.vite/
