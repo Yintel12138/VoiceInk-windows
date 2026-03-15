@@ -23,6 +23,10 @@
   },
   "author": "",
   "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yintel12138/VoiceInk-windows.git"
+  },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
@@ -78,6 +82,11 @@
         "AppImage",
         "deb"
       ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Yintel12138",
+      "repo": "VoiceInk-windows"
     }
   }
 }
