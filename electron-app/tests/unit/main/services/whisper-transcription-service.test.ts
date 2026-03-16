@@ -266,21 +266,19 @@ describe('Cross-platform helper functions', () => {
   });
 
   describe('getWhisperReleaseAssetName', () => {
-    it('should return a platform-specific archive name', () => {
+    it('should return a source archive name', () => {
       const name = getWhisperReleaseAssetName();
       expect(typeof name).toBe('string');
-      expect(name).toContain('whisper-bin');
+      expect(name).toContain('source');
     });
 
-    it('should contain the current platform name', () => {
+    it('should return zip format on Windows and tar.gz on Unix', () => {
       const name = getWhisperReleaseAssetName();
-      const platformMap: Record<string, string> = {
-        darwin: 'darwin',
-        win32: 'win',
-        linux: 'linux',
-      };
-      const expectedPlatform = platformMap[process.platform] || process.platform;
-      expect(name).toContain(expectedPlatform);
+      if (process.platform === 'win32') {
+        expect(name).toBe('source.zip');
+      } else {
+        expect(name).toBe('source.tar.gz');
+      }
     });
   });
 

@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
 import * as http from 'http';
+import * as zlib from 'zlib';
 import { TranscriptionModel, TranscriptionModelType } from '../../shared/types';
 
 // Platform detection helpers
@@ -34,25 +35,18 @@ export function getWhisperBinaryName(): string {
 
 /**
  * Get the whisper.cpp release asset name for the current platform.
- * Maps to the pre-built binary archive names on GitHub releases.
+ * Maps to the source code archive names on GitHub releases.
+ *
+ * Note: The official whisper.cpp repository does not publish pre-built binary
+ * archives in releases. We download the source archive and build from it,
+ * or fall back to alternative download strategies.
  */
 export function getWhisperReleaseAssetName(): string {
-  switch (PLATFORM) {
-    case 'darwin':
-      return ARCH === 'arm64'
-        ? 'whisper-bin-darwin-arm64.zip'
-        : 'whisper-bin-darwin-x64.zip';
-    case 'win32':
-      return ARCH === 'arm64'
-        ? 'whisper-bin-win-arm64.zip'
-        : 'whisper-bin-win-x64.zip';
-    case 'linux':
-      return ARCH === 'arm64'
-        ? 'whisper-bin-linux-arm64.tar.gz'
-        : 'whisper-bin-linux-x64.tar.gz';
-    default:
-      return `whisper-bin-${PLATFORM}-${ARCH}.tar.gz`;
+  // Source code archives are always available on GitHub releases
+  if (PLATFORM === 'win32') {
+    return 'source.zip';
   }
+  return 'source.tar.gz';
 }
 
 /**
@@ -350,13 +344,20 @@ export class WhisperTranscriptionService {
                 ? redirectUrl
                 : new URL(redirectUrl, downloadUrl).toString();
               attemptDownload(absoluteUrl, redirectCount + 1);
+              // Consume redirect response body to free resources
+              response.resume();
               return;
             }
           }
 
           // Handle range response (206) or full response (200)
           if (statusCode !== 200 && statusCode !== 206) {
-            reject(new Error(`Download failed with status ${statusCode}`));
+            // Consume response body to free resources
+            response.resume();
+            const statusMsg = statusCode === 404
+              ? `Download failed: file not found at ${downloadUrl}`
+              : `Download failed with status ${statusCode}`;
+            reject(new Error(statusMsg));
             return;
           }
 
@@ -483,17 +484,27 @@ export class WhisperTranscriptionService {
       return binaryPath;
     }
 
-    // Construct the download URL for the pre-built binary archive
-    const assetName = getWhisperReleaseAssetName();
-    const downloadUrl = `https://github.com/ggerganov/whisper.cpp/releases/download/${releaseTag}/${assetName}`;
+    // Construct the download URL for the source archive.
+    // The official whisper.cpp GitHub releases only provide source code
+    // archives (zipball/tarball), not pre-built binary archives.
+    // We download the source and attempt to build, or the user can place
+    // a pre-built binary in the bin directory.
+    const downloadUrl = PLATFORM === 'win32'
+      ? `https://github.com/ggerganov/whisper.cpp/archive/refs/tags/${releaseTag}.zip`
+      : `https://github.com/ggerganov/whisper.cpp/archive/refs/tags/${releaseTag}.tar.gz`;
 
-    const archivePath = path.join(this.binDir, assetName);
+    const archiveExt = PLATFORM === 'win32' ? '.zip' : '.tar.gz';
+    const archiveName = `whisper-cpp-${releaseTag}${archiveExt}`;
+    const archivePath = path.join(this.binDir, archiveName);
 
     // Download the archive
     await this.downloadFile(downloadUrl, archivePath, 'whisper-binary');
 
-    // Extract the binary
+    // Extract the source archive
     await this.extractWhisperBinary(archivePath, this.binDir);
+
+    // Attempt to build whisper.cpp from source
+    await this.buildWhisperFromSource(this.binDir, releaseTag);
 
     // Set executable permission on Unix-like systems
     if (PLATFORM !== 'win32') {
@@ -517,7 +528,11 @@ export class WhisperTranscriptionService {
     // Verify the binary exists
     const foundBinary = this.findWhisperBinary();
     if (!foundBinary) {
-      throw new Error(`Failed to extract whisper.cpp binary for ${PLATFORM}/${ARCH}`);
+      throw new Error(
+        `Failed to build whisper.cpp binary for ${PLATFORM}/${ARCH}. ` +
+        `Please ensure cmake and a C/C++ compiler are installed, or manually place ` +
+        `the whisper-cli binary in: ${this.binDir}`
+      );
     }
 
     return foundBinary;
@@ -742,34 +757,257 @@ export class WhisperTranscriptionService {
 
   /**
    * Extract whisper.cpp binary from downloaded archive.
-   * Handles both .zip (macOS/Windows) and .tar.gz (Linux) archives.
+   * Uses adm-zip (pure JS) for .zip files, eliminating the PowerShell
+   * dependency on Windows. Uses Node.js zlib + tar for .tar.gz files.
    */
   private async extractWhisperBinary(archivePath: string, destDir: string): Promise<void> {
+    if (archivePath.endsWith('.zip')) {
+      // Use adm-zip (pure JS, cross-platform) for zip extraction
+      try {
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip(archivePath);
+        zip.extractAllTo(destDir, /* overwrite */ true);
+      } catch (err) {
+        throw new Error(`Failed to extract zip archive: ${err}`);
+      }
+    } else if (archivePath.endsWith('.tar.gz') || archivePath.endsWith('.tgz')) {
+      // Use Node.js native zlib for decompression and tar command for extraction
+      // tar is available on macOS, Linux, and Windows 10+ (built-in bsdtar)
+      try {
+        const { execFile } = require('child_process');
+        const util = require('util');
+        const execFileAsync = util.promisify(execFile);
+        await execFileAsync('tar', ['xzf', archivePath, '-C', destDir], {
+          timeout: 60000,
+        });
+      } catch (err) {
+        // Fallback: use Node.js streams for tar.gz extraction
+        await this.extractTarGzNative(archivePath, destDir);
+      }
+    } else {
+      throw new Error(`Unsupported archive format: ${path.basename(archivePath)}`);
+    }
+  }
+
+  /**
+   * Native Node.js tar.gz extraction fallback.
+   * Uses zlib for decompression and manual tar parsing.
+   */
+  private extractTarGzNative(archivePath: string, destDir: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const gunzip = zlib.createGunzip();
+      const input = fs.createReadStream(archivePath);
+
+      const chunks: Buffer[] = [];
+      input.pipe(gunzip)
+        .on('data', (chunk: Buffer) => chunks.push(chunk))
+        .on('end', () => {
+          try {
+            const tarData = Buffer.concat(chunks);
+            this.parseTar(tarData, destDir);
+            resolve();
+          } catch (err) {
+            reject(new Error(`Failed to parse tar archive: ${err}`));
+          }
+        })
+        .on('error', (err: Error) => reject(new Error(`Failed to decompress archive: ${err.message}`)));
+    });
+  }
+
+  /**
+   * Simple tar archive parser for extracting files.
+   * Handles POSIX tar format used by GitHub source archives.
+   */
+  private parseTar(tarData: Buffer, destDir: string): void {
+    let offset = 0;
+    while (offset < tarData.length) {
+      // Read tar header (512 bytes)
+      if (offset + 512 > tarData.length) break;
+      const header = tarData.subarray(offset, offset + 512);
+
+      // Check for end of archive (two consecutive zero blocks)
+      if (header.every((b) => b === 0)) break;
+
+      // Extract filename (bytes 0-99)
+      const rawName = header.subarray(0, 100).toString('utf8').replace(/\0+$/, '');
+
+      // Check for prefix (bytes 345-499) in ustar format
+      const prefix = header.subarray(345, 500).toString('utf8').replace(/\0+$/, '');
+      const fileName = prefix ? path.join(prefix, rawName) : rawName;
+
+      // Extract file size (bytes 124-135, octal)
+      const sizeStr = header.subarray(124, 136).toString('utf8').replace(/\0+$/, '').trim();
+      const fileSize = parseInt(sizeStr, 8) || 0;
+
+      // Extract type flag (byte 156)
+      const typeFlag = header[156];
+
+      offset += 512; // Move past header
+
+      if (fileName && fileSize >= 0) {
+        const destPath = path.join(destDir, fileName);
+
+        // Validate path to prevent directory traversal
+        const resolvedDest = path.resolve(destPath);
+        const resolvedDir = path.resolve(destDir);
+        const relativePath = path.relative(resolvedDir, resolvedDest);
+        if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+          offset += Math.ceil(fileSize / 512) * 512;
+          continue;
+        }
+
+        if (typeFlag === 53 || typeFlag === 0x35 || fileName.endsWith('/')) {
+          // Directory entry
+          if (!fs.existsSync(destPath)) {
+            fs.mkdirSync(destPath, { recursive: true });
+          }
+        } else if (typeFlag === 0 || typeFlag === 48 || typeFlag === 0x30) {
+          // Regular file
+          const dir = path.dirname(destPath);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          if (fileSize > 0 && offset + fileSize <= tarData.length) {
+            const fileData = tarData.subarray(offset, offset + fileSize);
+            fs.writeFileSync(destPath, fileData);
+          }
+        }
+      }
+
+      // Advance to next header (file data is padded to 512-byte boundary)
+      offset += Math.ceil(fileSize / 512) * 512;
+    }
+  }
+
+  /**
+   * Attempt to build whisper.cpp from source using cmake.
+   * Looks for the extracted source directory and runs cmake build commands.
+   */
+  private async buildWhisperFromSource(binDir: string, releaseTag: string): Promise<void> {
     const { execFile } = require('child_process');
     const util = require('util');
     const execFileAsync = util.promisify(execFile);
 
-    if (archivePath.endsWith('.zip')) {
-      // Use platform-appropriate unzip
-      if (PLATFORM === 'win32') {
-        // PowerShell's Expand-Archive on Windows
-        await execFileAsync('powershell', [
-          '-Command',
-          `Expand-Archive -Path "${archivePath}" -DestinationPath "${destDir}" -Force`,
-        ], { timeout: 60000 });
-      } else {
-        // unzip on macOS/Linux
-        await execFileAsync('unzip', ['-o', archivePath, '-d', destDir], {
-          timeout: 60000,
-        });
+    // Find the extracted source directory (e.g., whisper.cpp-1.7.3/)
+    const versionStr = releaseTag.replace(/^v/, '');
+    const possibleDirs = [
+      path.join(binDir, `whisper.cpp-${versionStr}`),
+      path.join(binDir, `whisper-${versionStr}`),
+      path.join(binDir, `whisper.cpp-${releaseTag}`),
+    ];
+
+    let sourceDir: string | null = null;
+    for (const dir of possibleDirs) {
+      if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
+        sourceDir = dir;
+        break;
       }
-    } else if (archivePath.endsWith('.tar.gz') || archivePath.endsWith('.tgz')) {
-      // tar on macOS/Linux (and Windows with Git Bash)
-      await execFileAsync('tar', ['xzf', archivePath, '-C', destDir], {
-        timeout: 60000,
+    }
+
+    // Also search for any directory containing CMakeLists.txt
+    if (!sourceDir) {
+      try {
+        const entries = fs.readdirSync(binDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const cmakeFile = path.join(binDir, entry.name, 'CMakeLists.txt');
+            if (fs.existsSync(cmakeFile)) {
+              sourceDir = path.join(binDir, entry.name);
+              break;
+            }
+          }
+        }
+      } catch {
+        // Ignore directory reading errors
+      }
+    }
+
+    if (!sourceDir) {
+      // No source directory found - the user may need to manually provide the binary
+      return;
+    }
+
+    const buildDir = path.join(sourceDir, 'build');
+    if (!fs.existsSync(buildDir)) {
+      fs.mkdirSync(buildDir, { recursive: true });
+    }
+
+    try {
+      // Configure with cmake
+      const cmakeArgs = [
+        '-S', sourceDir,
+        '-B', buildDir,
+        '-DCMAKE_BUILD_TYPE=Release',
+        '-DWHISPER_BUILD_EXAMPLES=ON',
+      ];
+
+      if (PLATFORM === 'win32') {
+        // Set install prefix on Windows
+        cmakeArgs.push('-DCMAKE_INSTALL_PREFIX=' + binDir);
+      }
+
+      await execFileAsync('cmake', cmakeArgs, {
+        timeout: 120000,
+        cwd: sourceDir,
+        windowsHide: PLATFORM === 'win32',
       });
-    } else {
-      throw new Error(`Unsupported archive format: ${path.basename(archivePath)}`);
+
+      // Build
+      await execFileAsync('cmake', [
+        '--build', buildDir,
+        '--config', 'Release',
+        '--parallel',
+      ], {
+        timeout: 300000,
+        cwd: sourceDir,
+        windowsHide: PLATFORM === 'win32',
+      });
+
+      // Copy the built binary to the bin directory
+      this.copyBuiltBinary(buildDir, binDir);
+
+    } catch {
+      // cmake build failed - this is expected if cmake or compiler is not installed.
+      // Clean up the source directory to save disk space. Cleanup failure is
+      // non-critical and can be safely ignored (e.g., file locks on Windows).
+      try { fs.rmSync(sourceDir, { recursive: true, force: true }); } catch { /* cleanup failure is non-critical */ }
+    }
+  }
+
+  /**
+   * Copy the built whisper-cli binary from the build directory to the bin directory.
+   */
+  private copyBuiltBinary(buildDir: string, binDir: string): void {
+    const binaryNames = getPlatformBinaryNames();
+
+    // Search common build output locations
+    const searchDirs = [
+      buildDir,
+      path.join(buildDir, 'bin'),
+      path.join(buildDir, 'Release'),
+      path.join(buildDir, 'Debug'),
+      path.join(buildDir, 'examples', 'cli'),
+    ];
+
+    for (const dir of searchDirs) {
+      if (!fs.existsSync(dir)) continue;
+
+      for (const name of binaryNames) {
+        const srcPath = path.join(dir, name);
+        if (fs.existsSync(srcPath)) {
+          const destPath = path.join(binDir, name);
+          try {
+            fs.copyFileSync(srcPath, destPath);
+            // Set executable permission on Unix
+            if (PLATFORM !== 'win32') {
+              fs.chmodSync(destPath, 0o755);
+            }
+            return; // Found and copied
+          } catch {
+            // Continue searching
+          }
+        }
+      }
     }
   }
 
