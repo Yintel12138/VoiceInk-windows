@@ -87,12 +87,14 @@ describe('Integration: Transcription Pipeline', () => {
     it('should produce WAV file compatible with whisper.cpp input format', async () => {
       await audioService.startRecording();
 
-      // Generate 0.5 seconds of a simple sine wave pattern
+      // Generate 0.5 seconds of a simple sine wave
       const sampleRate = 16000;
+      const toneFrequency = 440; // A4 note in Hz
+      const amplitude = 16000;   // ~50% of 16-bit signed range
       const numSamples = sampleRate / 2;
       const buffer = Buffer.alloc(numSamples * 2); // 16-bit
       for (let i = 0; i < numSamples; i++) {
-        const value = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 16000;
+        const value = Math.sin(2 * Math.PI * toneFrequency * i / sampleRate) * amplitude;
         buffer.writeInt16LE(Math.round(value), i * 2);
       }
       audioService.receiveAudioChunk(buffer);
@@ -538,7 +540,8 @@ describe('Integration: Transcription Pipeline', () => {
         const result = await audioService.stopRecording();
         expect(result).not.toBeNull();
         recordings.push(result!.filePath);
-        // Small delay to ensure unique timestamps in filenames
+        // Small delay to ensure AudioRecordingService generates unique timestamp-based filenames
+        // The service creates filenames using Date.now() which has millisecond resolution
         await new Promise((resolve) => setTimeout(resolve, 10));
       }
 

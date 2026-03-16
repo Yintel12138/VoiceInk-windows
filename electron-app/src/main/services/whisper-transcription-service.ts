@@ -850,7 +850,8 @@ export class WhisperTranscriptionService {
         // Validate path to prevent directory traversal
         const resolvedDest = path.resolve(destPath);
         const resolvedDir = path.resolve(destDir);
-        if (!resolvedDest.startsWith(resolvedDir + path.sep) && resolvedDest !== resolvedDir) {
+        const relativePath = path.relative(resolvedDir, resolvedDest);
+        if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
           offset += Math.ceil(fileSize / 512) * 512;
           continue;
         }
@@ -941,7 +942,7 @@ export class WhisperTranscriptionService {
       ];
 
       if (PLATFORM === 'win32') {
-        // On Windows, use MSVC generator if available
+        // Set install prefix on Windows
         cmakeArgs.push('-DCMAKE_INSTALL_PREFIX=' + binDir);
       }
 
@@ -965,10 +966,11 @@ export class WhisperTranscriptionService {
       // Copy the built binary to the bin directory
       this.copyBuiltBinary(buildDir, binDir);
 
-    } catch (err) {
-      // cmake build failed - this is expected if cmake or compiler is not installed
-      // Clean up the source directory to save space
-      try { fs.rmSync(sourceDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    } catch {
+      // cmake build failed - this is expected if cmake or compiler is not installed.
+      // Clean up the source directory to save disk space. Cleanup failure is
+      // non-critical and can be safely ignored (e.g., file locks on Windows).
+      try { fs.rmSync(sourceDir, { recursive: true, force: true }); } catch { /* cleanup failure is non-critical */ }
     }
   }
 
