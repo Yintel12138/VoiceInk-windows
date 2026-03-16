@@ -3,20 +3,35 @@
  * Mirrors VoiceInk/Views/PowerMode/ views.
  *
  * Features:
- * - Power mode configuration list
+ * - Power mode configuration list with backend persistence
  * - Add/edit/delete power modes
  * - Drag-to-reorder
  * - Emoji assignment
  * - App-specific modes
  * - Default/disabled badges
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { PowerModeConfig } from '../../shared/types';
+
+declare global {
+  interface Window {
+    voiceink: {
+      powerMode: {
+        getConfigs: () => Promise<PowerModeConfig[]>;
+        saveConfig: (config: PowerModeConfig) => Promise<PowerModeConfig>;
+        deleteConfig: (id: string) => Promise<boolean>;
+        toggleEnabled: (id: string) => Promise<boolean>;
+        reorder: (orderedIds: string[]) => Promise<boolean>;
+      };
+    };
+  }
+}
 
 const EMOJI_OPTIONS = ['⚡', '💼', '✍️', '💻', '📝', '🎯', '🔬', '📊', '🎨', '🎓', '💡', '🚀', '🤖', '📧', '🎵', '📱'];
 
 export const PowerModeView: React.FC = () => {
   const [configs, setConfigs] = useState<PowerModeConfig[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isReordering, setIsReordering] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingConfig, setEditingConfig] = useState<PowerModeConfig | null>(null);
@@ -26,7 +41,24 @@ export const PowerModeView: React.FC = () => {
   const [newUrlPattern, setNewUrlPattern] = useState('');
   const [newLanguage, setNewLanguage] = useState('en');
 
-  const addConfig = useCallback(() => {
+  // Load configs from backend on mount
+  useEffect(() => {
+    loadConfigs();
+  }, []);
+
+  const loadConfigs = async () => {
+    try {
+      setIsLoading(true);
+      const loadedConfigs = await window.voiceink.powerMode.getConfigs();
+      setConfigs(loadedConfigs);
+    } catch (err) {
+      console.error('Failed to load power mode configs:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addConfig = useCallback(async () => {
     if (!newName.trim()) return;
     const config: PowerModeConfig = {
       id: Date.now().toString(),
@@ -38,29 +70,52 @@ export const PowerModeView: React.FC = () => {
       isEnabled: true,
       createdAt: new Date().toISOString(),
     };
-    setConfigs(prev => [...prev, config]);
-    resetForm();
+
+    try {
+      const saved = await window.voiceink.powerMode.saveConfig(config);
+      setConfigs(prev => [...prev, saved]);
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save power mode config:', err);
+    }
   }, [newName, newEmoji, newAppIdentifier, newUrlPattern, newLanguage]);
 
-  const deleteConfig = useCallback((id: string) => {
-    setConfigs(prev => prev.filter(c => c.id !== id));
+  const deleteConfig = useCallback(async (id: string) => {
+    try {
+      const success = await window.voiceink.powerMode.deleteConfig(id);
+      if (success) {
+        setConfigs(prev => prev.filter(c => c.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete power mode config:', err);
+    }
   }, []);
 
-  const toggleConfig = useCallback((id: string) => {
-    setConfigs(prev => prev.map(c =>
-      c.id === id ? { ...c, isEnabled: !c.isEnabled } : c
-    ));
+  const toggleConfig = useCallback(async (id: string) => {
+    try {
+      const newEnabled = await window.voiceink.powerMode.toggleEnabled(id);
+      setConfigs(prev => prev.map(c =>
+        c.id === id ? { ...c, isEnabled: newEnabled } : c
+      ));
+    } catch (err) {
+      console.error('Failed to toggle power mode config:', err);
+    }
   }, []);
 
   const moveConfig = useCallback((index: number, direction: 'up' | 'down') => {
-    setConfigs(prev => {
-      const newList = [...prev];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= newList.length) return prev;
-      [newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]];
-      return newList;
+    const newList = [...configs];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newList.length) return;
+
+    [newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]];
+    setConfigs(newList);
+
+    // Save reorder to backend
+    const orderedIds = newList.map(c => c.id);
+    window.voiceink.powerMode.reorder(orderedIds).catch((err) => {
+      console.error('Failed to reorder power mode configs:', err);
     });
-  }, []);
+  }, [configs]);
 
   const startEdit = (config: PowerModeConfig) => {
     setEditingConfig(config);
@@ -72,21 +127,25 @@ export const PowerModeView: React.FC = () => {
     setShowAddForm(true);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingConfig || !newName.trim()) return;
-    setConfigs(prev => prev.map(c =>
-      c.id === editingConfig.id
-        ? {
-            ...c,
-            name: newName.trim(),
-            emoji: newEmoji,
-            appIdentifier: newAppIdentifier.trim() || undefined,
-            urlPattern: newUrlPattern.trim() || undefined,
-            languageCode: newLanguage,
-          }
-        : c
-    ));
-    resetForm();
+
+    const updated: PowerModeConfig = {
+      ...editingConfig,
+      name: newName.trim(),
+      emoji: newEmoji,
+      appIdentifier: newAppIdentifier.trim() || undefined,
+      urlPattern: newUrlPattern.trim() || undefined,
+      languageCode: newLanguage,
+    };
+
+    try {
+      const saved = await window.voiceink.powerMode.saveConfig(updated);
+      setConfigs(prev => prev.map(c => c.id === saved.id ? saved : c));
+      resetForm();
+    } catch (err) {
+      console.error('Failed to update power mode config:', err);
+    }
   };
 
   const resetForm = () => {
@@ -98,6 +157,21 @@ export const PowerModeView: React.FC = () => {
     setNewUrlPattern('');
     setNewLanguage('en');
   };
+
+  if (isLoading) {
+    return (
+      <div className="view-container">
+        <div className="view-header">
+          <h1 className="view-title">Power Modes</h1>
+        </div>
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-text">Loading power modes...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="view-container">

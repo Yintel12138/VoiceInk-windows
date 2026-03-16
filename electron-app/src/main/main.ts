@@ -21,6 +21,7 @@ import { WhisperTranscriptionService } from './services/whisper-transcription-se
 import { AIEnhancementService } from './services/ai-enhancement-service';
 import { HotkeyService } from './services/hotkey-service';
 import { TranscriptionPipeline } from './services/transcription-pipeline';
+import { PowerModeService } from './services/power-mode-service';
 import { WindowManager } from './managers/window-manager';
 import { TrayManager } from './managers/tray-manager';
 import { registerIPCHandlers } from './ipc/handlers';
@@ -57,6 +58,8 @@ const aiService = new AIEnhancementService(
   path.join(userDataPath, 'ai')
 );
 
+const powerModeService = new PowerModeService();
+
 const hotkeyService = new HotkeyService({
   selectedHotkey1: settingsService.get('selectedHotkey1'),
   selectedHotkey2: settingsService.get('selectedHotkey2'),
@@ -89,6 +92,12 @@ if (savedPromptId) {
 const savedModelId = settingsService.get('selectedTranscriptionModelId');
 if (savedModelId) {
   whisperService.selectModel(savedModelId);
+}
+
+// Restore audio device selection
+const savedDeviceId = settingsService.get('selectedAudioDeviceId');
+if (savedDeviceId) {
+  audioService.selectDevice(savedDeviceId);
 }
 
 // Wire hotkey service to pipeline
@@ -165,6 +174,7 @@ app.whenReady().then(() => {
     hotkeyService,
     pipeline,
     windowManager,
+    powerModeService,
   });
 
   // Register audio IPC handlers for receiving audio data from renderer
