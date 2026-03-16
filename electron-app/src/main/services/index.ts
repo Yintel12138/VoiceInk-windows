@@ -6,3 +6,4 @@ export { WhisperTranscriptionService, WhisperTextFormatter, PREDEFINED_MODELS } 
 export { AIEnhancementService, AI_PROVIDERS, BUILTIN_PROMPTS } from './ai-enhancement-service';
 export { HotkeyService } from './hotkey-service';
 export { TranscriptionPipeline } from './transcription-pipeline';
+export { PowerModeService } from './power-mode-service';

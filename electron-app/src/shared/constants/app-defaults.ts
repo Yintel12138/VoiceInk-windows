@@ -18,6 +18,7 @@ export const APP_DEFAULTS: AppDefaultsType = {
   audioResumptionDelay: 0.0,
   isPauseMediaEnabled: false,
   isSoundFeedbackEnabled: true,
+  selectedAudioDeviceId: '',
 
   // Recording
   isTextFormattingEnabled: true,
@@ -68,6 +69,7 @@ export interface AppDefaultsType {
   audioResumptionDelay: number;
   isPauseMediaEnabled: boolean;
   isSoundFeedbackEnabled: boolean;
+  selectedAudioDeviceId: string;
   isTextFormattingEnabled: boolean;
   isVADEnabled: boolean;
   removeFillerWords: boolean;

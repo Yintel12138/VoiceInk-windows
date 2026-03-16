@@ -139,6 +139,7 @@ const api = {
     listDevices: () => ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DEVICES_LIST),
     selectDevice: (deviceId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.AUDIO_DEVICE_SELECT, deviceId),
+    getSelectedDevice: () => ipcRenderer.invoke('audio:getSelectedDevice'),
     sendChunk: (chunk: ArrayBuffer) =>
       ipcRenderer.send('audio:chunk', Buffer.from(chunk)),
     sendLevel: (level: { averagePower: number; peakPower: number }) =>
@@ -169,6 +170,35 @@ const api = {
     export: () => ipcRenderer.invoke(IPC_CHANNELS.DICTIONARY_EXPORT),
     import: (json: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.DICTIONARY_IMPORT, json),
+  },
+
+  // --- Power Mode ---
+  powerMode: {
+    getConfigs: () => ipcRenderer.invoke(IPC_CHANNELS.POWER_MODE_GET_CONFIGS),
+    saveConfig: (config: unknown) =>
+      ipcRenderer.invoke(IPC_CHANNELS.POWER_MODE_SAVE_CONFIG, config),
+    deleteConfig: (id: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.POWER_MODE_DELETE_CONFIG, id),
+    getActiveMode: () => ipcRenderer.invoke('powerMode:getActiveMode'),
+    setActiveMode: (id: string | null) =>
+      ipcRenderer.invoke('powerMode:setActiveMode', id),
+    detectAndActivate: (context?: { appIdentifier?: string; url?: string }) =>
+      ipcRenderer.invoke('powerMode:detectAndActivate', context),
+    toggleEnabled: (id: string) =>
+      ipcRenderer.invoke('powerMode:toggleEnabled', id),
+    reorder: (orderedIds: string[]) =>
+      ipcRenderer.invoke('powerMode:reorder', orderedIds),
+    export: () => ipcRenderer.invoke('powerMode:export'),
+    import: (json: string) =>
+      ipcRenderer.invoke('powerMode:import', json),
+    onActiveChanged: (callback: (id: string | null) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, id: string | null) => {
+        callback(id);
+      };
+      ipcRenderer.on(IPC_CHANNELS.POWER_MODE_ACTIVE_CHANGED, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.POWER_MODE_ACTIVE_CHANGED, listener);
+    },
   },
 
   // --- Window ---

@@ -1,0 +1,215 @@
+{
+  "timestamp": "2026-03-16T02:35:05.697Z",
+  "tests": [
+    {
+      "name": "Application Launch",
+      "status": "passed",
+      "duration": 2059,
+      "timestamp": "2026-03-16T02:35:10.999Z"
+    },
+    {
+      "name": "Dashboard / Metrics View",
+      "status": "passed",
+      "duration": 1056,
+      "timestamp": "2026-03-16T02:35:12.055Z"
+    },
+    {
+      "name": "AI Models Management",
+      "status": "failed",
+      "error": "Models view not loaded",
+      "duration": 2550,
+      "timestamp": "2026-03-16T02:35:14.606Z"
+    },
+    {
+      "name": "Model Categories",
+      "status": "failed",
+      "error": "Model categories not found",
+      "duration": 545,
+      "timestamp": "2026-03-16T02:35:15.152Z"
+    },
+    {
+      "name": "Settings View",
+      "status": "failed",
+      "error": "Settings view not loaded",
+      "duration": 2048,
+      "timestamp": "2026-03-16T02:35:17.200Z"
+    },
+    {
+      "name": "AI Enhancement View",
+      "status": "failed",
+      "error": "Enhancement view not loaded",
+      "duration": 2047,
+      "timestamp": "2026-03-16T02:35:19.248Z"
+    },
+    {
+      "name": "Dictionary Management",
+      "status": "failed",
+      "error": "Dictionary view not loaded",
+      "duration": 2048,
+      "timestamp": "2026-03-16T02:35:21.297Z"
+    },
+    {
+      "name": "Transcription History",
+      "status": "passed",
+      "duration": 2052,
+      "timestamp": "2026-03-16T02:35:23.349Z"
+    },
+    {
+      "name": "Power Mode Configuration",
+      "status": "failed",
+      "error": "Power Mode view not loaded",
+      "duration": 2049,
+      "timestamp": "2026-03-16T02:35:25.398Z"
+    },
+    {
+      "name": "Audio Input Settings",
+      "status": "failed",
+      "error": "Audio Input view not loaded",
+      "duration": 2048,
+      "timestamp": "2026-03-16T02:35:27.446Z"
+    },
+    {
+      "name": "Permissions View",
+      "status": "failed",
+      "error": "Permissions view not loaded",
+      "duration": 2047,
+      "timestamp": "2026-03-16T02:35:29.493Z"
+    },
+    {
+      "name": "Transcribe Audio View",
+      "status": "passed",
+      "duration": 2047,
+      "timestamp": "2026-03-16T02:35:31.540Z"
+    },
+    {
+      "name": "License View",
+      "status": "passed",
+      "duration": 2047,
+      "timestamp": "2026-03-16T02:35:33.587Z"
+    },
+    {
+      "name": "Onboarding Flow",
+      "status": "passed",
+      "duration": 2063,
+      "timestamp": "2026-03-16T02:35:35.650Z"
+    },
+    {
+      "name": "Navigation Consistency",
+      "status": "passed",
+      "duration": 2058,
+      "timestamp": "2026-03-16T02:35:37.708Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "01-app-launch",
+      "description": "Initial application window after launch",
+      "filename": "1773628510952-01-app-launch.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628510952-01-app-launch.png",
+      "timestamp": "2026-03-16T02:35:10.997Z"
+    },
+    {
+      "name": "02-dashboard",
+      "description": "Dashboard showing metrics and statistics",
+      "filename": "1773628512010-02-dashboard.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628512010-02-dashboard.png",
+      "timestamp": "2026-03-16T02:35:12.055Z"
+    },
+    {
+      "name": "03-models-view",
+      "description": "AI Models management with download options",
+      "filename": "1773628514568-03-models-view.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628514568-03-models-view.png",
+      "timestamp": "2026-03-16T02:35:14.605Z"
+    },
+    {
+      "name": "04-model-categories",
+      "description": "Model categories (Whisper, Parakeet, Custom)",
+      "filename": "1773628515115-04-model-categories.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628515115-04-model-categories.png",
+      "timestamp": "2026-03-16T02:35:15.151Z"
+    },
+    {
+      "name": "05-settings",
+      "description": "Settings with hotkeys and preferences",
+      "filename": "1773628517163-05-settings.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628517163-05-settings.png",
+      "timestamp": "2026-03-16T02:35:17.200Z"
+    },
+    {
+      "name": "06-enhancement",
+      "description": "AI Enhancement with providers and prompts",
+      "filename": "1773628519211-06-enhancement.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628519211-06-enhancement.png",
+      "timestamp": "2026-03-16T02:35:19.248Z"
+    },
+    {
+      "name": "07-dictionary",
+      "description": "Dictionary with vocabulary and replacements",
+      "filename": "1773628521259-07-dictionary.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628521259-07-dictionary.png",
+      "timestamp": "2026-03-16T02:35:21.296Z"
+    },
+    {
+      "name": "08-history",
+      "description": "Transcription history with search and filters",
+      "filename": "1773628523309-08-history.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628523309-08-history.png",
+      "timestamp": "2026-03-16T02:35:23.348Z"
+    },
+    {
+      "name": "09-power-mode",
+      "description": "Power Mode with app-specific configurations",
+      "filename": "1773628525361-09-power-mode.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628525361-09-power-mode.png",
+      "timestamp": "2026-03-16T02:35:25.397Z"
+    },
+    {
+      "name": "10-audio-input",
+      "description": "Audio input device selection",
+      "filename": "1773628527409-10-audio-input.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628527409-10-audio-input.png",
+      "timestamp": "2026-03-16T02:35:27.445Z"
+    },
+    {
+      "name": "11-permissions",
+      "description": "System permissions status",
+      "filename": "1773628529455-11-permissions.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628529455-11-permissions.png",
+      "timestamp": "2026-03-16T02:35:29.492Z"
+    },
+    {
+      "name": "12-transcribe-audio",
+      "description": "Audio file transcription interface",
+      "filename": "1773628531503-12-transcribe-audio.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628531503-12-transcribe-audio.png",
+      "timestamp": "2026-03-16T02:35:31.540Z"
+    },
+    {
+      "name": "13-license",
+      "description": "License management and activation",
+      "filename": "1773628533551-13-license.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628533551-13-license.png",
+      "timestamp": "2026-03-16T02:35:33.587Z"
+    },
+    {
+      "name": "14-onboarding",
+      "description": "Onboarding wizard",
+      "filename": "1773628535598-14-onboarding.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628535598-14-onboarding.png",
+      "timestamp": "2026-03-16T02:35:35.650Z"
+    },
+    {
+      "name": "15-dashboard-return",
+      "description": "Return to dashboard for consistency check",
+      "filename": "1773628537663-15-dashboard-return.png",
+      "filepath": "/home/runner/work/VoiceInk-windows/VoiceInk-windows/e2e-screenshots/1773628537663-15-dashboard-return.png",
+      "timestamp": "2026-03-16T02:35:37.708Z"
+    }
+  ],
+  "summary": {
+    "total": 15,
+    "passed": 7,
+    "failed": 8
+  }
+}

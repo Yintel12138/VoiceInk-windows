@@ -3,13 +3,25 @@
  * Mirrors VoiceInk/Views/AudioInputSettingsView.swift.
  *
  * Features:
- * - Audio device listing
- * - Device selection
+ * - Audio device listing with backend integration
+ * - Device selection with persistence
  * - Audio level meter (real-time)
  * - Device configuration
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import type { AudioDevice } from '../../shared/types';
+
+declare global {
+  interface Window {
+    voiceink: {
+      audio: {
+        listDevices: () => Promise<AudioDevice[]>;
+        selectDevice: (deviceId: string) => Promise<boolean>;
+        getSelectedDevice: () => Promise<string>;
+      };
+    };
+  }
+}
 
 export const AudioInputView: React.FC = () => {
   const [devices, setDevices] = useState<AudioDevice[]>([]);
@@ -20,7 +32,7 @@ export const AudioInputView: React.FC = () => {
   const [testStream, setTestStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
-    loadDevices();
+    loadDevicesAndSelection();
     return () => {
       // Cleanup test stream on unmount
       if (testStream) {
@@ -29,9 +41,12 @@ export const AudioInputView: React.FC = () => {
     };
   }, []);
 
-  const loadDevices = useCallback(async () => {
+  const loadDevicesAndSelection = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Load saved device selection from backend
+      const savedDeviceId = await window.voiceink.audio.getSelectedDevice();
+
       // Request permission first to get labeled devices
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -49,23 +64,37 @@ export const AudioInputView: React.FC = () => {
         }));
 
       setDevices(audioInputs);
-      if (audioInputs.length > 0 && !selectedDeviceId) {
-        setSelectedDeviceId(audioInputs[0].id);
+
+      // Set selected device to saved value or first device
+      if (savedDeviceId && audioInputs.some(d => d.id === savedDeviceId)) {
+        setSelectedDeviceId(savedDeviceId);
+      } else if (audioInputs.length > 0) {
+        const defaultDevice = audioInputs[0];
+        setSelectedDeviceId(defaultDevice.id);
+        // Save the default selection to backend
+        await window.voiceink.audio.selectDevice(defaultDevice.id);
       }
     } catch (err) {
-      console.error('Failed to enumerate audio devices:', err);
+      console.error('Failed to load audio devices:', err);
     }
     setIsLoading(false);
-  }, [selectedDeviceId]);
+  }, []);
 
-  const selectDevice = useCallback((deviceId: string) => {
-    setSelectedDeviceId(deviceId);
-    // Stop existing mic test if running
-    if (testStream) {
-      testStream.getTracks().forEach(t => t.stop());
-      setTestStream(null);
-      setIsTestingMic(false);
-      setAudioLevel(0);
+  const selectDevice = useCallback(async (deviceId: string) => {
+    try {
+      // Save selection to backend
+      await window.voiceink.audio.selectDevice(deviceId);
+      setSelectedDeviceId(deviceId);
+
+      // Stop existing mic test if running
+      if (testStream) {
+        testStream.getTracks().forEach(t => t.stop());
+        setTestStream(null);
+        setIsTestingMic(false);
+        setAudioLevel(0);
+      }
+    } catch (err) {
+      console.error('Failed to select audio device:', err);
     }
   }, [testStream]);
 
@@ -122,7 +151,7 @@ export const AudioInputView: React.FC = () => {
               Select and configure your microphone for voice recording
             </p>
           </div>
-          <button className="btn btn-secondary" onClick={loadDevices} disabled={isLoading}>
+          <button className="btn btn-secondary" onClick={loadDevicesAndSelection} disabled={isLoading}>
             🔄 Refresh Devices
           </button>
         </div>

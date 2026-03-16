@@ -16,8 +16,10 @@ import { WhisperTranscriptionService } from '../services/whisper-transcription-s
 import { AIEnhancementService } from '../services/ai-enhancement-service';
 import { HotkeyService } from '../services/hotkey-service';
 import { TranscriptionPipeline } from '../services/transcription-pipeline';
+import { PowerModeService } from '../services/power-mode-service';
 import { WindowManager } from '../managers/window-manager';
 import { AppDefaultKey } from '../../shared/constants';
+import type { PowerModeConfig } from '../../shared/types';
 
 export interface IPCDependencies {
   settingsService: SettingsService;
@@ -29,6 +31,7 @@ export interface IPCDependencies {
   hotkeyService: HotkeyService;
   pipeline: TranscriptionPipeline;
   windowManager: WindowManager;
+  powerModeService: PowerModeService;
 }
 
 export function registerIPCHandlers(deps: IPCDependencies): void {
@@ -42,6 +45,7 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
     hotkeyService,
     pipeline,
     windowManager,
+    powerModeService,
   } = deps;
 
   // --- Settings ---
@@ -94,7 +98,13 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
 
   ipcMain.handle(IPC_CHANNELS.AUDIO_DEVICE_SELECT, (_event, deviceId: string) => {
     audioService.selectDevice(deviceId);
+    // Persist device selection to settings
+    settingsService.set('selectedAudioDeviceId', deviceId);
     return true;
+  });
+
+  ipcMain.handle('audio:getSelectedDevice', () => {
+    return audioService.getCurrentDeviceId();
   });
 
   // --- Transcriptions ---
@@ -265,6 +275,53 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
 
   ipcMain.handle(IPC_CHANNELS.DICTIONARY_IMPORT, (_event, json: string) => {
     return dictionaryService.importFromJSON(json);
+  });
+
+  // --- Power Mode ---
+  ipcMain.handle(IPC_CHANNELS.POWER_MODE_GET_CONFIGS, () => {
+    return powerModeService.getConfigs();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.POWER_MODE_SAVE_CONFIG, (_event, config: PowerModeConfig) => {
+    return powerModeService.saveConfig(config);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.POWER_MODE_DELETE_CONFIG, (_event, id: string) => {
+    return powerModeService.deleteConfig(id);
+  });
+
+  ipcMain.handle('powerMode:getActiveMode', () => {
+    return powerModeService.getActiveMode();
+  });
+
+  ipcMain.handle('powerMode:setActiveMode', (_event, id: string | null) => {
+    powerModeService.setActiveMode(id);
+    // Broadcast change to all windows
+    const mainWin = windowManager.getMainWindow();
+    if (mainWin && !mainWin.isDestroyed()) {
+      mainWin.webContents.send(IPC_CHANNELS.POWER_MODE_ACTIVE_CHANGED, id);
+    }
+    return true;
+  });
+
+  ipcMain.handle('powerMode:detectAndActivate', (_event, context?: { appIdentifier?: string; url?: string }) => {
+    return powerModeService.detectAndActivateMode(context);
+  });
+
+  ipcMain.handle('powerMode:toggleEnabled', (_event, id: string) => {
+    return powerModeService.toggleEnabled(id);
+  });
+
+  ipcMain.handle('powerMode:reorder', (_event, orderedIds: string[]) => {
+    return powerModeService.reorderConfigs(orderedIds);
+  });
+
+  ipcMain.handle('powerMode:export', () => {
+    return powerModeService.exportConfigs();
+  });
+
+  ipcMain.handle('powerMode:import', (_event, json: string) => {
+    return powerModeService.importConfigs(json);
   });
 
   // --- Window Management ---
