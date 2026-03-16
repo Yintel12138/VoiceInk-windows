@@ -38,5 +38,15 @@ module.exports = {
         }],
       },
     },
+    {
+      displayName: 'integration',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+      transform: {
+        '^.+\\.tsx?$': ['ts-jest', {
+          tsconfig: 'tsconfig.json',
+        }],
+      },
+    },
   ],
 };
