@@ -1,0 +1,131 @@
+name: Build Swift macOS App
+
+on:
+  push:
+    branches:
+      - main
+      - 'copilot/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      upload_artifact:
+        description: 'Upload .app as artifact'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build VoiceInk (macOS)
+    runs-on: macos-15
+
+    env:
+      WHISPER_CPP_DIR: ${{ github.workspace }}/../whisper.cpp
+      FRAMEWORK_PATH: ${{ github.workspace }}/../whisper.cpp/build-apple/whisper.xcframework
+      DERIVED_DATA: ${{ github.workspace }}/.local-build
+
+    steps:
+      - name: Checkout VoiceInk
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------
+      # Cache the compiled whisper.xcframework so subsequent runs are fast
+      # ---------------------------------------------------------------
+      - name: Cache whisper.xcframework
+        id: cache-whisper
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.WHISPER_CPP_DIR }}/build-apple/whisper.xcframework
+          key: whisper-xcframework-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            whisper-xcframework-${{ runner.os }}-${{ runner.arch }}-
+
+      # ---------------------------------------------------------------
+      # Clone & build whisper.cpp only when the cache is cold
+      # ---------------------------------------------------------------
+      - name: Clone whisper.cpp
+        if: steps.cache-whisper.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git "$WHISPER_CPP_DIR"
+
+      - name: Build whisper.xcframework
+        if: steps.cache-whisper.outputs.cache-hit != 'true'
+        working-directory: ${{ env.WHISPER_CPP_DIR }}
+        run: |
+          ./build-xcframework.sh
+
+      # ---------------------------------------------------------------
+      # Resolve Swift Package dependencies (cached by Xcode automatically
+      # when DerivedData is reused, but an explicit step makes errors clear)
+      # ---------------------------------------------------------------
+      - name: Resolve Swift Package dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project VoiceInk.xcodeproj \
+            -scheme VoiceInk \
+            -derivedDataPath "$DERIVED_DATA" \
+            | xcpretty || true
+
+      # ---------------------------------------------------------------
+      # Build — ad-hoc signing, no Apple Developer account required.
+      # The project already references whisper.xcframework via the
+      # relative path "../whisper.cpp/build-apple/whisper.xcframework",
+      # which resolves correctly to our WHISPER_CPP_DIR clone.
+      # ---------------------------------------------------------------
+      - name: Build VoiceInk (ad-hoc signed)
+        run: |
+          xcodebuild \
+            -project VoiceInk.xcodeproj \
+            -scheme VoiceInk \
+            -configuration Debug \
+            -derivedDataPath "$DERIVED_DATA" \
+            -xcconfig LocalBuild.xcconfig \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_ENTITLEMENTS="$(pwd)/VoiceInk/VoiceInk.local.entitlements" \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) LOCAL_BUILD' \
+            | xcpretty && exit "${PIPESTATUS[0]}"
+
+      # ---------------------------------------------------------------
+      # Zip and upload the built .app
+      # ---------------------------------------------------------------
+      - name: Locate built app
+        id: locate-app
+        run: |
+          APP_PATH=$(find "$DERIVED_DATA" -name "VoiceInk.app" -maxdepth 6 | head -1)
+          echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
+          echo "Found: $APP_PATH"
+
+      - name: Zip VoiceInk.app
+        run: |
+          ditto -c -k --keepParent \
+            "${{ steps.locate-app.outputs.app_path }}" \
+            "${{ github.workspace }}/VoiceInk-macOS.zip"
+
+      - name: Upload VoiceInk.app artifact
+        if: ${{ github.event_name != 'pull_request' || inputs.upload_artifact == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoiceInk-macOS-${{ github.sha }}
+          path: VoiceInk-macOS.zip
+          retention-days: 14
+
+      # ---------------------------------------------------------------
+      # On a version tag, attach the zip to the GitHub Release
+      # ---------------------------------------------------------------
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: VoiceInk-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
