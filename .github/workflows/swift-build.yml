@@ -36,6 +36,17 @@ jobs:
         uses: actions/checkout@v4
 
       # ---------------------------------------------------------------
+      # Select the latest available Xcode (required for swift-tools-version 6.2+)
+      # ---------------------------------------------------------------
+      - name: Select latest Xcode
+        run: |
+          LATEST_XCODE=$(ls /Applications | grep '^Xcode_' | sort -V | tail -1 | sed 's/\.app$//')
+          echo "Selecting $LATEST_XCODE"
+          sudo xcode-select -s /Applications/${LATEST_XCODE}.app
+          xcodebuild -version
+          swift --version
+
+      # ---------------------------------------------------------------
       # Cache the compiled whisper.xcframework so subsequent runs are fast
       # ---------------------------------------------------------------
       - name: Cache whisper.xcframework
