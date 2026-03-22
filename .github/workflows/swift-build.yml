@@ -73,6 +73,19 @@ jobs:
           ./build-xcframework.sh
 
       # ---------------------------------------------------------------
+      # The Xcode project references whisper.xcframework via the
+      # $(HOME)/VoiceInk-Dependencies path (developer convention).
+      # In CI we build to a different path, so create a symlink that
+      # satisfies the project's hardcoded reference.
+      # ---------------------------------------------------------------
+      - name: Symlink whisper.cpp to expected location
+        run: |
+          mkdir -p "$HOME/VoiceInk-Dependencies"
+          ln -sfn "$WHISPER_CPP_DIR" "$HOME/VoiceInk-Dependencies/whisper.cpp"
+          echo "Symlink created: $HOME/VoiceInk-Dependencies/whisper.cpp -> $WHISPER_CPP_DIR"
+          ls "$HOME/VoiceInk-Dependencies/whisper.cpp/build-apple/"
+
+      # ---------------------------------------------------------------
       # Resolve Swift Package dependencies (cached by Xcode automatically
       # when DerivedData is reused, but an explicit step makes errors clear)
       # ---------------------------------------------------------------
@@ -86,9 +99,7 @@ jobs:
 
       # ---------------------------------------------------------------
       # Build — ad-hoc signing, no Apple Developer account required.
-      # The project already references whisper.xcframework via the
-      # relative path "../whisper.cpp/build-apple/whisper.xcframework",
-      # which resolves correctly to our WHISPER_CPP_DIR clone.
+      # whisper.xcframework is accessible via the symlink created above.
       # ---------------------------------------------------------------
       - name: Build VoiceInk (ad-hoc signed)
         run: |
