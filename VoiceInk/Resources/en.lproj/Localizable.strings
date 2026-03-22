@@ -1,0 +1,46 @@
+/* Navigation Items */
+"Dashboard" = "Dashboard";
+"AI Models" = "AI Models";
+"Enhancement" = "Enhancement";
+"Dictionary" = "Dictionary";
+"History" = "History";
+"Power Mode" = "Power Mode";
+"Audio Input" = "Audio Input";
+"Settings" = "Settings";
+"Permissions" = "Permissions";
+"Transcribe Audio" = "Transcribe Audio";
+"VoiceInk Pro" = "About";
+
+/* Common Labels */
+"Save" = "Save";
+"Cancel" = "Cancel";
+"Done" = "Done";
+"Delete" = "Delete";
+"Add" = "Add";
+"Edit" = "Edit";
+"Close" = "Close";
+"Back" = "Back";
+"Search" = "Search";
+"Download" = "Download";
+"Install" = "Install";
+"Remove" = "Remove";
+"Enable" = "Enable";
+"Disable" = "Disable";
+"On" = "On";
+"Off" = "Off";
+"Start Recording" = "Start Recording";
+"Stop Recording" = "Stop Recording";
+"Transcription" = "Transcription";
+"Model" = "Model";
+"Language" = "Language";
+"Auto" = "Auto";
+"Loading" = "Loading";
+"Processing" = "Processing";
+"Error" = "Error";
+"Success" = "Success";
+"Copy" = "Copy";
+"Paste" = "Paste";
+
+/* About / Open Source */
+"Open Source" = "Open Source";
+"VoiceInk is free and open source" = "VoiceInk is free and open source";

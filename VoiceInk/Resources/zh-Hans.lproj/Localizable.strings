@@ -1,0 +1,46 @@
+/* Navigation Items */
+"Dashboard" = "仪表盘";
+"AI Models" = "AI 模型";
+"Enhancement" = "增强";
+"Dictionary" = "词典";
+"History" = "历史记录";
+"Power Mode" = "超级模式";
+"Audio Input" = "音频输入";
+"Settings" = "设置";
+"Permissions" = "权限";
+"Transcribe Audio" = "转录音频";
+"VoiceInk Pro" = "关于";
+
+/* Common Labels */
+"Save" = "保存";
+"Cancel" = "取消";
+"Done" = "完成";
+"Delete" = "删除";
+"Add" = "添加";
+"Edit" = "编辑";
+"Close" = "关闭";
+"Back" = "返回";
+"Search" = "搜索";
+"Download" = "下载";
+"Install" = "安装";
+"Remove" = "移除";
+"Enable" = "启用";
+"Disable" = "禁用";
+"On" = "开";
+"Off" = "关";
+"Start Recording" = "开始录音";
+"Stop Recording" = "停止录音";
+"Transcription" = "转录";
+"Model" = "模型";
+"Language" = "语言";
+"Auto" = "自动";
+"Loading" = "加载中";
+"Processing" = "处理中";
+"Error" = "错误";
+"Success" = "成功";
+"Copy" = "复制";
+"Paste" = "粘贴";
+
+/* About / Open Source */
+"Open Source" = "开源软件";
+"VoiceInk is free and open source" = "VoiceInk 是免费开源软件";

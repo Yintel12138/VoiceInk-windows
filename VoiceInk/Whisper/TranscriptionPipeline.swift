@@ -13,8 +13,6 @@ class TranscriptionPipeline {
     private let promptDetectionService = PromptDetectionService()
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionPipeline")
 
-    var licenseViewModel: LicenseViewModel
-
     init(
         modelContext: ModelContext,
         serviceRegistry: TranscriptionServiceRegistry,
@@ -23,7 +21,6 @@ class TranscriptionPipeline {
         self.modelContext = modelContext
         self.serviceRegistry = serviceRegistry
         self.enhancementService = enhancementService
-        self.licenseViewModel = LicenseViewModel()
     }
 
     /// Run the full pipeline for a given transcription record.
@@ -111,9 +108,15 @@ class TranscriptionPipeline {
                 await promptDetectionService.applyDetectionResult(detectionResult, to: enhancementService)
             }
 
+            let isSkipShortEnhancementEnabled = UserDefaults.standard.bool(forKey: "SkipShortEnhancement")
+            let savedThreshold = UserDefaults.standard.integer(forKey: "ShortEnhancementWordThreshold")
+            let shortEnhancementWordThreshold = savedThreshold > 0 ? savedThreshold : 3
+            let shouldSkipEnhancement = isSkipShortEnhancementEnabled && WordCounter.count(in: text) <= shortEnhancementWordThreshold
+
             if let enhancementService,
                enhancementService.isEnhancementEnabled,
-               enhancementService.isConfigured {
+               enhancementService.isConfigured,
+               !shouldSkipEnhancement {
                 if shouldCancel() { await onCleanup(); return }
 
                 onStateChange(.enhancing)
@@ -131,6 +134,12 @@ class TranscriptionPipeline {
                     finalPastedText = enhancedText
                 } catch {
                     transcription.enhancedText = "Enhancement failed: \(error)"
+                    await MainActor.run {
+                        NotificationManager.shared.showNotification(
+                            title: "Enhancement failed",
+                            type: .warning
+                        )
+                    }
                     if shouldCancel() { await onCleanup(); return }
                 }
             }
@@ -153,21 +162,14 @@ class TranscriptionPipeline {
 
         if var textToPaste = finalPastedText,
            transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
-            if case .trialExpired = licenseViewModel.licenseState {
-                textToPaste = """
-                    Your trial has expired. Upgrade to VoiceInk Pro at tryvoiceink.com/buy
-                    \n\(textToPaste)
-                    """
-            }
-
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
                 CursorPaster.pasteAtCursor(textToPaste + (appendSpace ? " " : ""))
 
                 let powerMode = PowerModeManager.shared
-                if let activeConfig = powerMode.currentActiveConfiguration, activeConfig.isAutoSendEnabled {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        CursorPaster.pressEnter()
+                if let activeConfig = powerMode.currentActiveConfiguration, activeConfig.autoSendKey.isEnabled {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        CursorPaster.performAutoSend(activeConfig.autoSendKey)
                     }
                 }
             }
