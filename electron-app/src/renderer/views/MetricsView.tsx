@@ -4,7 +4,264 @@
  * DashboardPromotionsSection, and HelpAndResourcesSection.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Transcription } from '../../shared/models/transcription';
+
+export const MetricsView: React.FC = () => {
+  const { t } = useTranslation();
+  const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [appVersion, setAppVersion] = useState('');
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
+  const [isLicenseActive] = useState(false);
+  const [trialDaysRemaining] = useState(7);
+
+  useEffect(() => {
+    loadTranscriptions();
+    loadAppInfo();
+  }, []);
+
+  const loadTranscriptions = async () => {
+    try {
+      if (window.voiceink?.transcriptions?.list) {
+        const data = await window.voiceink.transcriptions.list();
+        setTranscriptions(data as Transcription[]);
+      }
+    } catch (err) {
+      console.error('Failed to load transcriptions:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadAppInfo = async () => {
+    try {
+      if (window.voiceink?.app?.getVersion) {
+        const v = await window.voiceink.app.getVersion();
+        setAppVersion(v as string);
+      }
+      if (window.voiceink?.settings?.get) {
+        const onboarded = await window.voiceink.settings.get('hasCompletedOnboarding');
+        setHasCompletedOnboarding(onboarded as boolean);
+      }
+    } catch { /* ignore */ }
+  };
+
+  const navigateTo = useCallback((view: string) => {
+    if (window.voiceink?.window?.navigate) {
+      window.voiceink.window.navigate(view);
+    }
+  }, []);
+
+  const totalTranscriptions = transcriptions.length;
+  const totalDuration = transcriptions.reduce((sum, tr) => sum + (tr.duration || 0), 0);
+  const totalWords = transcriptions.reduce(
+    (sum, tr) => sum + (tr.text?.split(/\s+/).filter(Boolean).length || 0),
+    0
+  );
+  const enhancedCount = transcriptions.filter((tr) => tr.enhancedText).length;
+
+  const avgWordsPerTranscription = totalTranscriptions > 0
+    ? Math.round(totalWords / totalTranscriptions) : 0;
+  const avgDurationPerTranscription = totalTranscriptions > 0
+    ? totalDuration / totalTranscriptions : 0;
+
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${Math.round(seconds)}s`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="view-container">
+        <div className="view-header">
+          <h1 className="view-title">{t('dashboard.title')}</h1>
+        </div>
+        <div className="empty-state">
+          <div className="empty-state-text">{t('dashboard.loading')}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="view-container">
+      <div className="view-header">
+        <h1 className="view-title">{t('dashboard.title')}</h1>
+        <p className="view-subtitle">{t('dashboard.subtitle')}</p>
+      </div>
+
+      {/* Trial message banner */}
+      {!isLicenseActive && (
+        <div className={`trial-banner ${trialDaysRemaining <= 3 ? 'warning' : 'info'}`}>
+          <div className="trial-banner-icon">
+            {trialDaysRemaining <= 3 ? '⚠️' : 'ℹ️'}
+          </div>
+          <div className="trial-banner-text">
+            {trialDaysRemaining <= 3
+              ? t('dashboard.trial.expiringSoon', { days: trialDaysRemaining })
+              : t('dashboard.trial.remaining', { days: trialDaysRemaining })
+            }
+          </div>
+          <button className="btn btn-primary btn-small" onClick={() => navigateTo('license')}>
+            {t('dashboard.trial.addLicense')}
+          </button>
+        </div>
+      )}
+
+      {/* Setup prompt for first-time users */}
+      {!hasCompletedOnboarding && totalTranscriptions === 0 && (
+        <div className="card setup-card">
+          <div className="card-title">{t('dashboard.getStarted.title')}</div>
+          <div className="setup-steps">
+            <div className="setup-step" onClick={() => navigateTo('permissions')}>
+              <div className="setup-step-icon">🔒</div>
+              <div className="setup-step-info">
+                <div className="setup-step-title">{t('dashboard.getStarted.step1Title')}</div>
+                <div className="setup-step-description">{t('dashboard.getStarted.step1Desc')}</div>
+              </div>
+              <span className="setup-step-arrow">→</span>
+            </div>
+            <div className="setup-step" onClick={() => navigateTo('models')}>
+              <div className="setup-step-icon">🤖</div>
+              <div className="setup-step-info">
+                <div className="setup-step-title">{t('dashboard.getStarted.step2Title')}</div>
+                <div className="setup-step-description">{t('dashboard.getStarted.step2Desc')}</div>
+              </div>
+              <span className="setup-step-arrow">→</span>
+            </div>
+            <div className="setup-step" onClick={() => navigateTo('settings')}>
+              <div className="setup-step-icon">⚙️</div>
+              <div className="setup-step-info">
+                <div className="setup-step-title">{t('dashboard.getStarted.step3Title')}</div>
+                <div className="setup-step-description">{t('dashboard.getStarted.step3Desc')}</div>
+              </div>
+              <span className="setup-step-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Metrics Cards */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <div className="metric-icon">📝</div>
+          <div className="metric-value">{totalTranscriptions}</div>
+          <div className="metric-label">{t('dashboard.metrics.totalTranscriptions')}</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">📊</div>
+          <div className="metric-value">{totalWords.toLocaleString()}</div>
+          <div className="metric-label">{t('dashboard.metrics.wordsTranscribed')}</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">⏱️</div>
+          <div className="metric-value">{formatDuration(totalDuration)}</div>
+          <div className="metric-label">{t('dashboard.metrics.totalRecordingTime')}</div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">✨</div>
+          <div className="metric-value">{enhancedCount}</div>
+          <div className="metric-label">{t('dashboard.metrics.aiEnhanced')}</div>
+        </div>
+      </div>
+
+      {/* Performance Analysis */}
+      {totalTranscriptions > 0 && (
+        <div className="card">
+          <div className="card-title">{t('dashboard.performance.title')}</div>
+          <div className="analysis-grid">
+            <div className="analysis-item">
+              <div className="analysis-label">{t('dashboard.performance.avgWords')}</div>
+              <div className="analysis-value">{avgWordsPerTranscription}</div>
+            </div>
+            <div className="analysis-item">
+              <div className="analysis-label">{t('dashboard.performance.avgDuration')}</div>
+              <div className="analysis-value">{formatDuration(avgDurationPerTranscription)}</div>
+            </div>
+            <div className="analysis-item">
+              <div className="analysis-label">{t('dashboard.performance.enhancementRate')}</div>
+              <div className="analysis-value">
+                {totalTranscriptions > 0 ? Math.round((enhancedCount / totalTranscriptions) * 100) : 0}%
+              </div>
+            </div>
+            <div className="analysis-item">
+              <div className="analysis-label">{t('dashboard.performance.wordsPerMinute')}</div>
+              <div className="analysis-value">
+                {totalDuration > 0 ? Math.round(totalWords / (totalDuration / 60)) : 0}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {totalTranscriptions === 0 && hasCompletedOnboarding && (
+        <div className="empty-state">
+          <div className="empty-state-icon">🎙️</div>
+          <div className="empty-state-text">
+            {t('dashboard.empty')}
+          </div>
+        </div>
+      )}
+
+      {/* Help & Resources */}
+      <div className="card">
+        <div className="card-title">{t('dashboard.help.title')}</div>
+        <div className="help-links">
+          <a
+            className="help-link"
+            href="#"
+            onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/docs')}
+          >
+            <span className="help-link-icon">📖</span>
+            <span className="help-link-text">{t('dashboard.help.docs')}</span>
+            <span className="help-link-arrow">→</span>
+          </a>
+          <a
+            className="help-link"
+            href="#"
+            onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/support')}
+          >
+            <span className="help-link-icon">💬</span>
+            <span className="help-link-text">{t('dashboard.help.support')}</span>
+            <span className="help-link-arrow">→</span>
+          </a>
+          <a
+            className="help-link"
+            href="#"
+            onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/changelog')}
+          >
+            <span className="help-link-icon">📋</span>
+            <span className="help-link-text">{t('dashboard.help.whatsNew')}</span>
+            <span className="help-link-arrow">→</span>
+          </a>
+          <a
+            className="help-link"
+            href="#"
+            onClick={() => window.voiceink?.app?.openExternal('mailto:support@voiceink.app')}
+          >
+            <span className="help-link-icon">✉️</span>
+            <span className="help-link-text">{t('dashboard.help.emailSupport')}</span>
+            <span className="help-link-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      {appVersion && (
+        <div className="app-version-footer">
+          {t('dashboard.version', { version: appVersion })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const MetricsView: React.FC = () => {
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);

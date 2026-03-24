@@ -7,9 +7,11 @@
  * power mode indicator, and enhancement toggle.
  */
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { RecordingState, AudioLevel } from '../../shared/types';
 
 export const MiniRecorderView: React.FC = () => {
+  const { t } = useTranslation();
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [audioLevel, setAudioLevel] = useState<AudioLevel>({
     averagePower: 0,
@@ -99,11 +101,11 @@ export const MiniRecorderView: React.FC = () => {
       case 'recording':
         return formatTime(elapsedSeconds);
       case 'transcribing':
-        return 'Transcribing...';
+        return t('miniRecorder.transcribing');
       case 'enhancing':
-        return 'Enhancing...';
+        return t('miniRecorder.enhancing');
       default:
-        return 'Ready';
+        return t('miniRecorder.ready');
     }
   };
 
@@ -130,7 +132,12 @@ export const MiniRecorderView: React.FC = () => {
     return height;
   });
 
-  const PROMPTS = ['Fix Grammar', 'Professional', 'Casual', 'Summarize'];
+  const PROMPTS = [
+    t('miniRecorder.prompts.fixGrammar'),
+    t('miniRecorder.prompts.professional'),
+    t('miniRecorder.prompts.casual'),
+    t('miniRecorder.prompts.summarize'),
+  ];
 
   return (
     <div className="mini-recorder">
@@ -176,7 +183,7 @@ export const MiniRecorderView: React.FC = () => {
         <button
           className={`mini-recorder-enhancement ${isEnhancementEnabled ? 'active' : ''}`}
           onClick={toggleEnhancement}
-          title={isEnhancementEnabled ? 'AI Enhancement: ON' : 'AI Enhancement: OFF'}
+          title={isEnhancementEnabled ? t('miniRecorder.enhancementOn') : t('miniRecorder.enhancementOff')}
         >
           ✨
         </button>

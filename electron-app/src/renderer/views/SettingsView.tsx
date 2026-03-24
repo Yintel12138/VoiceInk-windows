@@ -18,6 +18,7 @@
  * - Diagnostics
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SettingsState {
   isSoundFeedbackEnabled: boolean;
@@ -50,37 +51,38 @@ interface SettingsState {
 
 type HotkeyOption = 'capsLock' | 'rightOption' | 'fn' | 'custom' | 'none';
 
-const HOTKEY_OPTIONS: { value: HotkeyOption; label: string }[] = [
-  { value: 'none', label: 'Not Set' },
-  { value: 'capsLock', label: 'Caps Lock' },
-  { value: 'rightOption', label: 'Right Option / Alt' },
-  { value: 'fn', label: 'Fn / Globe' },
-  { value: 'custom', label: 'Custom...' },
-];
-
-const HOTKEY_MODES = [
-  { value: 'toggle', label: 'Toggle (press to start/stop)' },
-  { value: 'pushToTalk', label: 'Push-to-Talk (hold to record)' },
-  { value: 'hybrid', label: 'Hybrid (short press toggle, long press PTT)' },
-];
-
-const LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'it', name: 'Italian' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'auto', name: 'Auto-detect' },
-];
-
 export const SettingsView: React.FC = () => {
+  const { t } = useTranslation();
+
+  const HOTKEY_OPTIONS: { value: HotkeyOption; label: string }[] = [
+    { value: 'none', label: t('settings.hotkeys.options.notSet') },
+    { value: 'capsLock', label: t('settings.hotkeys.options.capsLock') },
+    { value: 'rightOption', label: t('settings.hotkeys.options.rightOption') },
+    { value: 'fn', label: t('settings.hotkeys.options.fn') },
+    { value: 'custom', label: t('settings.hotkeys.options.custom') },
+  ];
+
+  const HOTKEY_MODES = [
+    { value: 'toggle', label: t('settings.hotkeys.modes.toggle') },
+    { value: 'pushToTalk', label: t('settings.hotkeys.modes.pushToTalk') },
+    { value: 'hybrid', label: t('settings.hotkeys.modes.hybrid') },
+  ];
+
+  const LANGUAGES = [
+    { code: 'en', name: t('settings.languages.en') },
+    { code: 'zh', name: t('settings.languages.zh') },
+    { code: 'es', name: t('settings.languages.es') },
+    { code: 'fr', name: t('settings.languages.fr') },
+    { code: 'de', name: t('settings.languages.de') },
+    { code: 'ja', name: t('settings.languages.ja') },
+    { code: 'ko', name: t('settings.languages.ko') },
+    { code: 'pt', name: t('settings.languages.pt') },
+    { code: 'ru', name: t('settings.languages.ru') },
+    { code: 'it', name: t('settings.languages.it') },
+    { code: 'ar', name: t('settings.languages.ar') },
+    { code: 'hi', name: t('settings.languages.hi') },
+    { code: 'auto', name: t('settings.languages.auto') },
+  ];
   const [settings, setSettings] = useState<SettingsState>({
     isSoundFeedbackEnabled: true,
     isSystemMuteEnabled: true,
@@ -112,6 +114,12 @@ export const SettingsView: React.FC = () => {
   const [showHotkey2, setShowHotkey2] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [diagnosticsText, setDiagnosticsText] = useState('');
+  const [customSpeechApiEnabled, setCustomSpeechApiEnabled] = useState(false);
+  const [customSpeechApiType, setCustomSpeechApiType] = useState<'http' | 'websocket'>('http');
+  const [customSpeechApiUrl, setCustomSpeechApiUrl] = useState('');
+  const [customSpeechApiKey, setCustomSpeechApiKey] = useState('');
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connected' | 'failed'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -126,6 +134,15 @@ export const SettingsView: React.FC = () => {
         if (all.selectedHotkey2 && all.selectedHotkey2 !== 'none') {
           setShowHotkey2(true);
         }
+        // Load custom speech API settings
+        const apiEnabled = await window.voiceink.settings.get('customSpeechApiEnabled');
+        if (apiEnabled !== undefined) setCustomSpeechApiEnabled(apiEnabled as boolean);
+        const apiType = await window.voiceink.settings.get('customSpeechApiType');
+        if (apiType) setCustomSpeechApiType(apiType as 'http' | 'websocket');
+        const apiUrl = await window.voiceink.settings.get('customSpeechApiUrl');
+        if (apiUrl) setCustomSpeechApiUrl(apiUrl as string);
+        const apiKey = await window.voiceink.settings.get('customSpeechApiKey');
+        if (apiKey) setCustomSpeechApiKey(apiKey as string);
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -140,6 +157,17 @@ export const SettingsView: React.FC = () => {
       }
     } catch (err) {
       console.error(`Failed to update setting ${key}:`, err);
+    }
+  }, []);
+
+  // Alias for updating settings by key (used for custom speech API settings)
+  const saveSetting = useCallback(async (key: string, value: unknown) => {
+    try {
+      if (window.voiceink?.settings?.set) {
+        await window.voiceink.settings.set(key, value);
+      }
+    } catch (err) {
+      console.error(`Failed to save setting ${key}:`, err);
     }
   }, []);
 
@@ -212,8 +240,8 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="view-container">
       <div className="view-header">
-        <h1 className="view-title">Settings</h1>
-        <p className="view-subtitle">Configure VoiceInk behavior and preferences</p>
+        <h1 className="view-title">{t('settings.title')}</h1>
+        <p className="view-subtitle">{t('settings.subtitle')}</p>
       </div>
 
       {/* Hidden file input for import */}
@@ -227,12 +255,12 @@ export const SettingsView: React.FC = () => {
 
       {/* Hotkey Configuration */}
       <div className="card">
-        <div className="card-title">⌨️ Keyboard Shortcuts</div>
+        <div className="card-title">{t('settings.hotkeys.title')}</div>
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Hotkey #1</span>
-            <span className="setting-description">Primary keyboard shortcut to control recording</span>
+            <span className="setting-name">{t('settings.hotkeys.hotkey1')}</span>
+            <span className="setting-description">{t('settings.hotkeys.hotkey1Desc')}</span>
           </div>
           <select
             className="select"
@@ -248,8 +276,8 @@ export const SettingsView: React.FC = () => {
         {settings.selectedHotkey1 !== 'none' && (
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Hotkey #1 Mode</span>
-              <span className="setting-description">How the hotkey triggers recording</span>
+              <span className="setting-name">{t('settings.hotkeys.hotkey1Mode')}</span>
+              <span className="setting-description">{t('settings.hotkeys.hotkey1ModeDesc')}</span>
             </div>
             <select
               className="select"
@@ -269,7 +297,7 @@ export const SettingsView: React.FC = () => {
             style={{ marginTop: '8px' }}
             onClick={() => setShowHotkey2(true)}
           >
-            + Add Second Shortcut
+            {t('settings.hotkeys.addSecond')}
           </button>
         )}
 
@@ -277,8 +305,8 @@ export const SettingsView: React.FC = () => {
           <>
             <div className="setting-row" style={{ marginTop: '16px' }}>
               <div className="setting-label">
-                <span className="setting-name">Hotkey #2</span>
-                <span className="setting-description">Secondary keyboard shortcut</span>
+                <span className="setting-name">{t('settings.hotkeys.hotkey2')}</span>
+                <span className="setting-description">{t('settings.hotkeys.hotkey2Desc')}</span>
               </div>
               <select
                 className="select"
@@ -294,7 +322,7 @@ export const SettingsView: React.FC = () => {
             {settings.selectedHotkey2 !== 'none' && (
               <div className="setting-row">
                 <div className="setting-label">
-                  <span className="setting-name">Hotkey #2 Mode</span>
+                  <span className="setting-name">{t('settings.hotkeys.hotkey2Mode')}</span>
                 </div>
                 <select
                   className="select"
@@ -312,8 +340,8 @@ export const SettingsView: React.FC = () => {
 
         <div className="setting-row" style={{ marginTop: '16px' }}>
           <div className="setting-label">
-            <span className="setting-name">Middle-Click Recording</span>
-            <span className="setting-description">Toggle recording with middle mouse button click</span>
+            <span className="setting-name">{t('settings.hotkeys.middleClick')}</span>
+            <span className="setting-description">{t('settings.hotkeys.middleClickDesc')}</span>
           </div>
           <label className="toggle-switch">
             <input
@@ -328,8 +356,8 @@ export const SettingsView: React.FC = () => {
         {settings.isMiddleClickToggleEnabled && (
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Middle-Click Activation Delay</span>
-              <span className="setting-description">Milliseconds delay to avoid accidental triggers</span>
+              <span className="setting-name">{t('settings.hotkeys.middleClickDelay')}</span>
+              <span className="setting-description">{t('settings.hotkeys.middleClickDelayDesc')}</span>
             </div>
             <input
               type="number"
@@ -347,18 +375,18 @@ export const SettingsView: React.FC = () => {
 
       {/* Recording Settings */}
       <div className="card">
-        <div className="card-title">🎤 Recording</div>
+        <div className="card-title">{t('settings.recording.title')}</div>
 
         <ToggleSetting
-          name="Sound Feedback"
-          description="Play sound when recording starts/stops"
+          name={t('settings.recording.soundFeedback')}
+          description={t('settings.recording.soundFeedbackDesc')}
           checked={settings.isSoundFeedbackEnabled}
           onChange={(v) => updateSetting('isSoundFeedbackEnabled', v)}
         />
 
         <ToggleSetting
-          name="Mute System Audio"
-          description="Mute system audio while recording"
+          name={t('settings.recording.muteAudio')}
+          description={t('settings.recording.muteAudioDesc')}
           checked={settings.isSystemMuteEnabled}
           onChange={(v) => updateSetting('isSystemMuteEnabled', v)}
         />
@@ -366,8 +394,8 @@ export const SettingsView: React.FC = () => {
         {settings.isSystemMuteEnabled && (
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Audio Resumption Delay</span>
-              <span className="setting-description">Seconds to wait before unmuting after recording stops</span>
+              <span className="setting-name">{t('settings.recording.audioDelay')}</span>
+              <span className="setting-description">{t('settings.recording.audioDelayDesc')}</span>
             </div>
             <input
               type="number"
@@ -383,44 +411,44 @@ export const SettingsView: React.FC = () => {
         )}
 
         <ToggleSetting
-          name="Pause Media Playback"
-          description="Pause media players during recording"
+          name={t('settings.recording.pauseMedia')}
+          description={t('settings.recording.pauseMediaDesc')}
           checked={settings.isPauseMediaEnabled}
           onChange={(v) => updateSetting('isPauseMediaEnabled', v)}
         />
 
         <ToggleSetting
-          name="Voice Activity Detection"
-          description="Automatically detect speech and silence"
+          name={t('settings.recording.vad')}
+          description={t('settings.recording.vadDesc')}
           checked={settings.isVADEnabled}
           onChange={(v) => updateSetting('isVADEnabled', v)}
         />
 
         <ToggleSetting
-          name="Remove Filler Words"
-          description='Remove &quot;um&quot;, &quot;uh&quot;, &quot;like&quot; etc. from transcription'
+          name={t('settings.recording.fillerWords')}
+          description={t('settings.recording.fillerWordsDesc')}
           checked={settings.removeFillerWords}
           onChange={(v) => updateSetting('removeFillerWords', v)}
         />
 
         <ToggleSetting
-          name="Text Formatting"
-          description="Auto-capitalize and add punctuation"
+          name={t('settings.recording.formatting')}
+          description={t('settings.recording.formattingDesc')}
           checked={settings.isTextFormattingEnabled}
           onChange={(v) => updateSetting('isTextFormattingEnabled', v)}
         />
 
         <ToggleSetting
-          name="Append Trailing Space"
-          description="Add a space at the end of transcribed text"
+          name={t('settings.recording.trailingSpace')}
+          description={t('settings.recording.trailingSpaceDesc')}
           checked={settings.appendTrailingSpace}
           onChange={(v) => updateSetting('appendTrailingSpace', v)}
         />
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Language</span>
-            <span className="setting-description">Transcription language</span>
+            <span className="setting-name">{t('settings.recording.language')}</span>
+            <span className="setting-description">{t('settings.recording.languageDesc')}</span>
           </div>
           <select
             className="select"
@@ -435,9 +463,9 @@ export const SettingsView: React.FC = () => {
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Recorder Type</span>
+            <span className="setting-name">{t('settings.recording.recorderType')}</span>
             <span className="setting-description">
-              Choose between mini or notch recorder style
+              {t('settings.recording.recorderTypeDesc')}
             </span>
           </div>
           <select
@@ -445,19 +473,19 @@ export const SettingsView: React.FC = () => {
             value={settings.recorderType}
             onChange={(e) => updateSetting('recorderType', e.target.value)}
           >
-            <option value="mini">Mini</option>
-            <option value="notch">Notch</option>
+            <option value="mini">{t('settings.recording.recorderMini')}</option>
+            <option value="notch">{t('settings.recording.recorderNotch')}</option>
           </select>
         </div>
       </div>
 
       {/* Clipboard Settings */}
       <div className="card">
-        <div className="card-title">📋 Clipboard</div>
+        <div className="card-title">{t('settings.clipboard.title')}</div>
 
         <ToggleSetting
-          name="Restore Clipboard After Paste"
-          description="Restore original clipboard content after pasting transcription"
+          name={t('settings.clipboard.restore')}
+          description={t('settings.clipboard.restoreDesc')}
           checked={settings.restoreClipboardAfterPaste}
           onChange={(v) => updateSetting('restoreClipboardAfterPaste', v)}
         />
@@ -465,8 +493,8 @@ export const SettingsView: React.FC = () => {
         {settings.restoreClipboardAfterPaste && (
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Clipboard Restore Delay</span>
-              <span className="setting-description">Seconds to wait before restoring</span>
+              <span className="setting-name">{t('settings.clipboard.restoreDelay')}</span>
+              <span className="setting-description">{t('settings.clipboard.restoreDelayDesc')}</span>
             </div>
             <input
               type="number"
@@ -486,11 +514,11 @@ export const SettingsView: React.FC = () => {
 
       {/* Cleanup Settings */}
       <div className="card">
-        <div className="card-title">🧹 Auto Cleanup</div>
+        <div className="card-title">{t('settings.cleanup.title')}</div>
 
         <ToggleSetting
-          name="Auto-Delete Transcriptions"
-          description="Automatically delete old transcriptions"
+          name={t('settings.cleanup.autoDelete')}
+          description={t('settings.cleanup.autoDeleteDesc')}
           checked={settings.isTranscriptionCleanupEnabled}
           onChange={(v) => updateSetting('isTranscriptionCleanupEnabled', v)}
         />
@@ -498,8 +526,8 @@ export const SettingsView: React.FC = () => {
         {settings.isTranscriptionCleanupEnabled && (
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Retention Period</span>
-              <span className="setting-description">Minutes to keep transcriptions</span>
+              <span className="setting-name">{t('settings.cleanup.retention')}</span>
+              <span className="setting-description">{t('settings.cleanup.retentionDesc')}</span>
             </div>
             <select
               className="select"
@@ -508,18 +536,18 @@ export const SettingsView: React.FC = () => {
                 updateSetting('transcriptionRetentionMinutes', parseInt(e.target.value))
               }
             >
-              <option value={60}>1 hour</option>
-              <option value={360}>6 hours</option>
-              <option value={1440}>1 day</option>
-              <option value={10080}>1 week</option>
-              <option value={43200}>1 month</option>
+              <option value={60}>{t('settings.cleanup.retentionOptions.1hour')}</option>
+              <option value={360}>{t('settings.cleanup.retentionOptions.6hours')}</option>
+              <option value={1440}>{t('settings.cleanup.retentionOptions.1day')}</option>
+              <option value={10080}>{t('settings.cleanup.retentionOptions.1week')}</option>
+              <option value={43200}>{t('settings.cleanup.retentionOptions.1month')}</option>
             </select>
           </div>
         )}
 
         <ToggleSetting
-          name="Auto-Delete Audio Files"
-          description="Automatically delete old audio recordings"
+          name={t('settings.cleanup.autoDeleteAudio')}
+          description={t('settings.cleanup.autoDeleteAudioDesc')}
           checked={settings.isAudioCleanupEnabled}
           onChange={(v) => updateSetting('isAudioCleanupEnabled', v)}
         />
@@ -527,8 +555,8 @@ export const SettingsView: React.FC = () => {
         {settings.isAudioCleanupEnabled && (
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Audio Retention Period</span>
-              <span className="setting-description">Days to keep audio files</span>
+              <span className="setting-name">{t('settings.cleanup.audioRetention')}</span>
+              <span className="setting-description">{t('settings.cleanup.audioRetentionDesc')}</span>
             </div>
             <select
               className="select"
@@ -537,11 +565,11 @@ export const SettingsView: React.FC = () => {
                 updateSetting('audioRetentionPeriod', parseInt(e.target.value))
               }
             >
-              <option value={1}>1 day</option>
-              <option value={7}>7 days</option>
-              <option value={30}>30 days</option>
-              <option value={90}>90 days</option>
-              <option value={365}>1 year</option>
+              <option value={1}>{t('settings.cleanup.audioRetentionOptions.1day')}</option>
+              <option value={7}>{t('settings.cleanup.audioRetentionOptions.7days')}</option>
+              <option value={30}>{t('settings.cleanup.audioRetentionOptions.30days')}</option>
+              <option value={90}>{t('settings.cleanup.audioRetentionOptions.90days')}</option>
+              <option value={365}>{t('settings.cleanup.audioRetentionOptions.1year')}</option>
             </select>
           </div>
         )}
@@ -549,87 +577,86 @@ export const SettingsView: React.FC = () => {
 
       {/* General */}
       <div className="card">
-        <div className="card-title">⚙️ General</div>
+        <div className="card-title">{t('settings.general.title')}</div>
 
         <ToggleSetting
-          name="Menu Bar Only Mode"
-          description="Hide dock icon and only show in menu bar / system tray"
+          name={t('settings.general.menuBarOnly')}
+          description={t('settings.general.menuBarOnlyDesc')}
           checked={settings.isMenuBarOnly}
           onChange={(v) => updateSetting('isMenuBarOnly', v)}
         />
 
         <ToggleSetting
-          name="Auto Check Updates"
-          description="Automatically check for app updates"
+          name={t('settings.general.autoUpdate')}
+          description={t('settings.general.autoUpdateDesc')}
           checked={settings.autoUpdateCheck}
           onChange={(v) => updateSetting('autoUpdateCheck', v)}
         />
 
         <ToggleSetting
-          name="Show Announcements"
-          description="Display in-app announcements and news"
+          name={t('settings.general.announcements')}
+          description={t('settings.general.announcementsDesc')}
           checked={settings.enableAnnouncements}
           onChange={(v) => updateSetting('enableAnnouncements', v)}
         />
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Check for Updates</span>
-            <span className="setting-description">Manually check for app updates now</span>
+            <span className="setting-name">{t('settings.general.checkUpdates')}</span>
+            <span className="setting-description">{t('settings.general.checkUpdatesDesc')}</span>
           </div>
           <button
             className="btn btn-secondary"
             onClick={() => {
-              // Placeholder for update check
-              alert('You are running the latest version!');
+              alert(t('settings.general.latestVersion'));
             }}
           >
-            Check Now
+            {t('settings.general.checkNow')}
           </button>
         </div>
       </div>
 
       {/* Data Management */}
       <div className="card">
-        <div className="card-title">💾 Data Management</div>
+        <div className="card-title">{t('settings.data.title')}</div>
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Export Settings</span>
-            <span className="setting-description">Save all settings to a JSON file</span>
+            <span className="setting-name">{t('settings.data.exportSettings')}</span>
+            <span className="setting-description">{t('settings.data.exportSettingsDesc')}</span>
           </div>
           <button className="btn btn-secondary" onClick={exportSettings}>
-            📤 Export
+            {t('settings.data.exportBtn')}
           </button>
         </div>
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Import Settings</span>
-            <span className="setting-description">Load settings from a JSON file</span>
+            <span className="setting-name">{t('settings.data.importSettings')}</span>
+            <span className="setting-description">{t('settings.data.importSettingsDesc')}</span>
           </div>
           <button className="btn btn-secondary" onClick={importSettings}>
-            📥 Import
+            {t('settings.data.importBtn')}
           </button>
         </div>
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Reset Onboarding</span>
-            <span className="setting-description">Show the onboarding guide again on next launch</span>
+            <span className="setting-name">{t('settings.data.resetOnboarding')}</span>
+            <span className="setting-description">{t('settings.data.resetOnboardingDesc')}</span>
           </div>
           <button className="btn btn-secondary" onClick={resetOnboarding}>
-            🔄 Reset
+            {t('settings.data.resetBtn')}
           </button>
         </div>
 
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Diagnostics</span>
-            <span className="setting-description">View system info and debug data</span>
+            <span className="setting-name">{t('settings.data.diagnostics')}</span>
+            <span className="setting-description">{t('settings.data.diagnosticsDesc')}</span>
           </div>
           <button className="btn btn-secondary" onClick={showDiagnosticsInfo}>
-            🔍 Show Diagnostics
+            {t('settings.data.showDiagnostics')}
           </button>
         </div>
       </div>
@@ -638,9 +665,9 @@ export const SettingsView: React.FC = () => {
       {showDiagnostics && (
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="card-title" style={{ margin: 0 }}>Diagnostics</div>
+            <div className="card-title" style={{ margin: 0 }}>{t('settings.data.diagnosticsTitle')}</div>
             <button className="btn btn-secondary btn-small" onClick={() => setShowDiagnostics(false)}>
-              Close
+              {t('common.close')}
             </button>
           </div>
           <pre className="diagnostics-output">{diagnosticsText}</pre>
@@ -649,10 +676,95 @@ export const SettingsView: React.FC = () => {
             style={{ marginTop: '8px' }}
             onClick={() => navigator.clipboard.writeText(diagnosticsText)}
           >
-            📋 Copy to Clipboard
+            {t('settings.data.copyClipboard')}
           </button>
         </div>
       )}
+
+      {/* Custom Speech API */}
+      <div className="card">
+        <div className="card-title">{t('settings.customSpeechApi.title')}</div>
+        <div className="setting-row">
+          <div className="setting-label">
+            <span className="setting-name">{t('settings.customSpeechApi.enabled')}</span>
+            <span className="setting-description">{t('settings.customSpeechApi.enabledDesc')}</span>
+          </div>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={customSpeechApiEnabled} onChange={e => { setCustomSpeechApiEnabled(e.target.checked); saveSetting('customSpeechApiEnabled', e.target.checked); }} />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+        {customSpeechApiEnabled && (
+          <>
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">{t('settings.customSpeechApi.type')}</span>
+                <span className="setting-description">{t('settings.customSpeechApi.typeDesc')}</span>
+              </div>
+              <select className="select" value={customSpeechApiType} onChange={e => { setCustomSpeechApiType(e.target.value as 'http' | 'websocket'); saveSetting('customSpeechApiType', e.target.value); }}>
+                <option value="http">{t('settings.customSpeechApi.typeHttp')}</option>
+                <option value="websocket">{t('settings.customSpeechApi.typeWebSocket')}</option>
+              </select>
+            </div>
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">{t('settings.customSpeechApi.url')}</span>
+                <span className="setting-description">{t('settings.customSpeechApi.urlDesc')}</span>
+              </div>
+              <input
+                type="text"
+                className="input"
+                value={customSpeechApiUrl}
+                placeholder={t('settings.customSpeechApi.urlPlaceholder')}
+                onChange={e => setCustomSpeechApiUrl(e.target.value)}
+                onBlur={e => saveSetting('customSpeechApiUrl', e.target.value)}
+              />
+            </div>
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">{t('settings.customSpeechApi.apiKey')}</span>
+                <span className="setting-description">{t('settings.customSpeechApi.apiKeyDesc')}</span>
+              </div>
+              <input
+                type="password"
+                className="input"
+                value={customSpeechApiKey}
+                placeholder={t('settings.customSpeechApi.apiKeyPlaceholder')}
+                onChange={e => setCustomSpeechApiKey(e.target.value)}
+                onBlur={e => saveSetting('customSpeechApiKey', e.target.value)}
+              />
+            </div>
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">{t('settings.customSpeechApi.testConnection')}</span>
+                {connectionStatus === 'connected' && <span className="badge badge-success">{t('settings.customSpeechApi.connected')}</span>}
+                {connectionStatus === 'failed' && <span className="badge badge-danger">{t('settings.customSpeechApi.connectionFailed')}</span>}
+              </div>
+              <button
+                className="btn btn-secondary"
+                disabled={isTestingConnection || !customSpeechApiUrl}
+                onClick={async () => {
+                  setIsTestingConnection(true);
+                  setConnectionStatus('idle');
+                  try {
+                    const result = await window.voiceink?.customSpeechApi?.testConnection?.({
+                      url: customSpeechApiUrl,
+                      apiKey: customSpeechApiKey,
+                      type: customSpeechApiType,
+                    });
+                    setConnectionStatus(result ? 'connected' : 'failed');
+                  } catch {
+                    setConnectionStatus('failed');
+                  }
+                  setIsTestingConnection(false);
+                }}
+              >
+                {isTestingConnection ? t('settings.customSpeechApi.testing') : t('settings.customSpeechApi.testConnection')}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

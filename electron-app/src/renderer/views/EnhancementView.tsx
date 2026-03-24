@@ -12,6 +12,7 @@
  * - Context toggles (Clipboard, Screen)
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CustomPrompt, AIProvider } from '../../shared/types';
 
 const AI_PROVIDERS: AIProvider[] = [
@@ -97,6 +98,7 @@ const BUILT_IN_PROMPTS: CustomPrompt[] = [
 ];
 
 export const EnhancementView: React.FC = () => {
+  const { t } = useTranslation();
   const [isEnabled, setIsEnabled] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState('openai');
   const [selectedModelId, setSelectedModelId] = useState('gpt-4o-mini');

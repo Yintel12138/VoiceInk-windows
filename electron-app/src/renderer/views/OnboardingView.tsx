@@ -10,6 +10,7 @@
  * 5. Complete - All done, start using VoiceInk
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface OnboardingViewProps {
   onComplete: () => void;
@@ -31,6 +32,7 @@ const TYPEWRITER_ROLES = [
 ];
 
 export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [fadeIn, setFadeIn] = useState(false);
 
@@ -166,8 +168,8 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void }> = ({
   return (
     <div className="onboarding-step welcome-step">
       <div className="onboarding-icon">🎙️</div>
-      <h1 className="onboarding-title">Welcome to VoiceInk</h1>
-      <p className="onboarding-subtitle">The Future of Typing</p>
+      <h1 className="onboarding-title">{t('onboarding.welcome')}</h1>
+      <p className="onboarding-subtitle">{t('onboarding.tagline')}</p>
 
       <div className="typewriter-container">
         <span className="typewriter-prefix">Built for </span>
@@ -194,10 +196,10 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void }> = ({
 
       <div className="onboarding-actions">
         <button className="btn btn-primary btn-lg" onClick={onNext}>
-          Get Started
+          {t('onboarding.getStarted')}
         </button>
         <button className="btn btn-ghost" onClick={onSkip}>
-          Skip Setup
+          {t('onboarding.skip')}
         </button>
       </div>
     </div>

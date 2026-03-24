@@ -11,9 +11,11 @@
  * - Search/filter
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { VocabularyWord, WordReplacement } from '../../shared/models/dictionary';
 
 export const DictionaryView: React.FC = () => {
+  const { t } = useTranslation();
   const [words, setWords] = useState<VocabularyWord[]>([]);
   const [replacements, setReplacements] = useState<WordReplacement[]>([]);
   const [newWord, setNewWord] = useState('');

@@ -11,6 +11,7 @@
  * - Transcription result display
  */
 import React, { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type TranscribeState = 'idle' | 'fileSelected' | 'processing' | 'complete' | 'error';
 
@@ -27,6 +28,7 @@ const SUPPORTED_FORMATS = [
 ];
 
 export const TranscribeAudioView: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = useState<TranscribeState>('idle');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -132,9 +134,9 @@ export const TranscribeAudioView: React.FC = () => {
   return (
     <div className="view-container">
       <div className="view-header">
-        <h1 className="view-title">Transcribe Audio</h1>
+        <h1 className="view-title">{t('transcribeAudio.title')}</h1>
         <p className="view-subtitle">
-          Transcribe audio and video files using AI speech recognition
+          {t('transcribeAudio.subtitle')}
         </p>
       </div>
 

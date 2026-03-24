@@ -5,6 +5,7 @@
  * Displays app header with navigation items grouped by category.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ViewType } from '../../../shared/types';
 
 interface SidebarProps {
@@ -15,43 +16,50 @@ interface SidebarProps {
 interface NavItem {
   type: ViewType;
   icon: string;
-  label: string;
+  labelKey: string;
 }
 
-const navSections: { title: string; items: NavItem[] }[] = [
+interface NavSection {
+  titleKey: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Overview',
+    titleKey: 'sidebar.sections.overview',
     items: [
-      { type: 'metrics', icon: '📊', label: 'Dashboard' },
-      { type: 'transcribeAudio', icon: '🎤', label: 'Transcribe Audio' },
+      { type: 'metrics', icon: '📊', labelKey: 'sidebar.items.dashboard' },
+      { type: 'transcribeAudio', icon: '🎤', labelKey: 'sidebar.items.transcribeAudio' },
     ],
   },
   {
-    title: 'AI & Models',
+    titleKey: 'sidebar.sections.aiModels',
     items: [
-      { type: 'models', icon: '🤖', label: 'AI Models' },
-      { type: 'enhancement', icon: '✨', label: 'AI Enhancement' },
-      { type: 'powerMode', icon: '⚡', label: 'Power Mode' },
+      { type: 'models', icon: '🤖', labelKey: 'sidebar.items.aiModels' },
+      { type: 'enhancement', icon: '✨', labelKey: 'sidebar.items.aiEnhancement' },
+      { type: 'powerMode', icon: '⚡', labelKey: 'sidebar.items.powerMode' },
     ],
   },
   {
-    title: 'Customization',
+    titleKey: 'sidebar.sections.customization',
     items: [
-      { type: 'dictionary', icon: '📖', label: 'Dictionary' },
-      { type: 'audioInput', icon: '🎧', label: 'Audio Input' },
+      { type: 'dictionary', icon: '📖', labelKey: 'sidebar.items.dictionary' },
+      { type: 'audioInput', icon: '🎧', labelKey: 'sidebar.items.audioInput' },
     ],
   },
   {
-    title: 'System',
+    titleKey: 'sidebar.sections.system',
     items: [
-      { type: 'settings', icon: '⚙️', label: 'Settings' },
-      { type: 'permissions', icon: '🔒', label: 'Permissions' },
-      { type: 'license', icon: '🏷️', label: 'License' },
+      { type: 'settings', icon: '⚙️', labelKey: 'sidebar.items.settings' },
+      { type: 'permissions', icon: '🔒', labelKey: 'sidebar.items.permissions' },
+      { type: 'license', icon: '🏷️', labelKey: 'sidebar.items.license' },
     ],
   },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
+  const { t } = useTranslation();
+
   const handleHistoryClick = () => {
     if (window.voiceink?.window?.openHistory) {
       window.voiceink.window.openHistory();
@@ -65,13 +73,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
       <div className="sidebar-header">
         <div className="sidebar-title">
           <span>🎙️</span>
-          <span>VoiceInk</span>
+          <span>{t('app.name')}</span>
         </div>
       </div>
 
-      {navSections.map((section) => (
-        <div key={section.title} className="sidebar-section">
-          <div className="sidebar-section-title">{section.title}</div>
+      {NAV_SECTIONS.map((section) => (
+        <div key={section.titleKey} className="sidebar-section">
+          <div className="sidebar-section-title">{t(section.titleKey)}</div>
           {section.items.map((item) => (
             <button
               key={item.type}
@@ -79,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
               onClick={() => onNavigate(item.type)}
             >
               <span className="sidebar-item-icon">{item.icon}</span>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -87,13 +95,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => 
 
       {/* History button opens a separate window */}
       <div className="sidebar-section">
-        <div className="sidebar-section-title">Data</div>
+        <div className="sidebar-section-title">{t('sidebar.sections.data')}</div>
         <button
           className={`sidebar-item ${currentView === 'history' ? 'active' : ''}`}
           onClick={handleHistoryClick}
         >
           <span className="sidebar-item-icon">📋</span>
-          <span>History</span>
+          <span>{t('sidebar.items.history')}</span>
         </button>
       </div>
     </nav>

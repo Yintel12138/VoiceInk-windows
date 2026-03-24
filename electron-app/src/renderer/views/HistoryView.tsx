@@ -13,11 +13,13 @@
  * - Column toggles (date, duration, model, power mode)
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Transcription } from '../../shared/models/transcription';
 
 const PAGE_SIZE = 20;
 
 export const HistoryView: React.FC = () => {
+  const { t } = useTranslation();
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -156,7 +158,7 @@ export const HistoryView: React.FC = () => {
     return (
       <div className="view-container">
         <div className="empty-state">
-          <div className="empty-state-text">Loading...</div>
+          <div className="empty-state-text">{t('common.loading')}</div>
         </div>
       </div>
     );
@@ -167,21 +169,23 @@ export const HistoryView: React.FC = () => {
       <div className="view-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="view-title">Transcription History</h1>
+            <h1 className="view-title">{t('history.title')}</h1>
             <p className="view-subtitle">
-              {filteredTranscriptions.length} transcription{filteredTranscriptions.length !== 1 ? 's' : ''}
-              {searchQuery && ` matching "${searchQuery}"`}
+              {searchQuery
+                ? t('history.subtitleSearch', { query: searchQuery })
+                : t('history.subtitle_other', { count: filteredTranscriptions.length })
+              }
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn-secondary" onClick={exportCSV} disabled={transcriptions.length === 0}>
-              📥 Export CSV
+              {t('history.exportCSV')}
             </button>
             <button
               className={`btn ${isMultiSelectMode ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => { setIsMultiSelectMode(!isMultiSelectMode); setSelectedIds(new Set()); }}
             >
-              {isMultiSelectMode ? '✓ Done' : '☐ Select'}
+              {isMultiSelectMode ? t('history.done') : t('history.select')}
             </button>
           </div>
         </div>
@@ -193,7 +197,7 @@ export const HistoryView: React.FC = () => {
         <input
           className="search-input"
           type="text"
-          placeholder="Search transcriptions..."
+          placeholder={t('history.searchPlaceholder')}
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setDisplayCount(PAGE_SIZE); }}
         />
@@ -205,28 +209,28 @@ export const HistoryView: React.FC = () => {
       {/* Column Toggles */}
       <div className="column-toggles">
         <label className="column-toggle">
-          <input type="checkbox" checked={showDate} onChange={() => setShowDate(!showDate)} /> Date
+          <input type="checkbox" checked={showDate} onChange={() => setShowDate(!showDate)} /> {t('history.columns.date')}
         </label>
         <label className="column-toggle">
-          <input type="checkbox" checked={showDuration} onChange={() => setShowDuration(!showDuration)} /> Duration
+          <input type="checkbox" checked={showDuration} onChange={() => setShowDuration(!showDuration)} /> {t('history.columns.duration')}
         </label>
         <label className="column-toggle">
-          <input type="checkbox" checked={showModel} onChange={() => setShowModel(!showModel)} /> Model
+          <input type="checkbox" checked={showModel} onChange={() => setShowModel(!showModel)} /> {t('history.columns.model')}
         </label>
         <label className="column-toggle">
-          <input type="checkbox" checked={showPowerMode} onChange={() => setShowPowerMode(!showPowerMode)} /> Power Mode
+          <input type="checkbox" checked={showPowerMode} onChange={() => setShowPowerMode(!showPowerMode)} /> {t('history.columns.powerMode')}
         </label>
       </div>
 
       {/* Selection Toolbar */}
       {isMultiSelectMode && (
         <div className="selection-toolbar">
-          <div className="selection-count">{selectedIds.size} selected</div>
-          <button className="btn btn-secondary btn-small" onClick={selectAll}>Select All</button>
-          <button className="btn btn-secondary btn-small" onClick={deselectAll}>Deselect All</button>
+          <div className="selection-count">{t('history.selected', { count: selectedIds.size })}</div>
+          <button className="btn btn-secondary btn-small" onClick={selectAll}>{t('history.selectAll')}</button>
+          <button className="btn btn-secondary btn-small" onClick={deselectAll}>{t('history.deselectAll')}</button>
           {selectedIds.size > 0 && (
             <button className="btn btn-danger btn-small" onClick={handleBulkDelete}>
-              🗑️ Delete Selected
+              {t('history.deleteSelected')}
             </button>
           )}
         </div>
@@ -236,7 +240,7 @@ export const HistoryView: React.FC = () => {
         <div className="empty-state">
           <div className="empty-state-icon">📋</div>
           <div className="empty-state-text">
-            {searchQuery ? `No transcriptions matching "${searchQuery}".` : 'No transcriptions yet. Start recording to build your history.'}
+            {searchQuery ? t('history.emptySearch', { query: searchQuery }) : t('history.empty')}
           </div>
         </div>
       ) : (
@@ -295,32 +299,32 @@ export const HistoryView: React.FC = () => {
           {selected && !isMultiSelectMode && (
             <div className="history-detail">
               <div className="card">
-                <div className="card-title">Transcription Details</div>
+                <div className="card-title">{t('history.details.title')}</div>
                 <div className="detail-section">
-                  <div className="detail-label">Original Text</div>
+                  <div className="detail-label">{t('history.details.originalText')}</div>
                   <div className="detail-text">{selected.text || '—'}</div>
                 </div>
                 {selected.enhancedText && (
                   <div className="detail-section">
-                    <div className="detail-label">Enhanced Text</div>
+                    <div className="detail-label">{t('history.details.enhancedText')}</div>
                     <div className="detail-text">{selected.enhancedText}</div>
                   </div>
                 )}
                 <div className="detail-meta">
-                  <div><strong>Date:</strong> {formatDate(selected.timestamp)}</div>
-                  {selected.duration > 0 && <div><strong>Duration:</strong> {formatDuration(selected.duration)}</div>}
-                  {selected.transcriptionModelName && <div><strong>Model:</strong> {selected.transcriptionModelName}</div>}
-                  {selected.powerModeName && <div><strong>Power Mode:</strong> {selected.powerModeEmoji} {selected.powerModeName}</div>}
+                  <div><strong>{t('history.details.date')}</strong> {formatDate(selected.timestamp)}</div>
+                  {selected.duration > 0 && <div><strong>{t('history.details.duration')}</strong> {formatDuration(selected.duration)}</div>}
+                  {selected.transcriptionModelName && <div><strong>{t('history.details.model')}</strong> {selected.transcriptionModelName}</div>}
+                  {selected.powerModeName && <div><strong>{t('history.details.powerMode')}</strong> {selected.powerModeEmoji} {selected.powerModeName}</div>}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                   <button
                     className="btn btn-primary"
                     onClick={() => navigator.clipboard.writeText(selected.enhancedText || selected.text)}
                   >
-                    📋 Copy
+                    {t('history.details.copy')}
                   </button>
                   <button className="btn btn-danger" onClick={() => handleDelete(selected.id)}>
-                    🗑️ Delete
+                    {t('history.details.delete')}
                   </button>
                 </div>
               </div>

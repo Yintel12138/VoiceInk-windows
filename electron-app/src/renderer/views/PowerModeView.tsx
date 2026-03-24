@@ -11,6 +11,7 @@
  * - Default/disabled badges
  */
 import React, { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PowerModeConfig } from '../../shared/types';
 
 declare global {
@@ -30,6 +31,7 @@ declare global {
 const EMOJI_OPTIONS = ['⚡', '💼', '✍️', '💻', '📝', '🎯', '🔬', '📊', '🎨', '🎓', '💡', '🚀', '🤖', '📧', '🎵', '📱'];
 
 export const PowerModeView: React.FC = () => {
+  const { t } = useTranslation();
   const [configs, setConfigs] = useState<PowerModeConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isReordering, setIsReordering] = useState(false);
@@ -162,7 +164,7 @@ export const PowerModeView: React.FC = () => {
     return (
       <div className="view-container">
         <div className="view-header">
-          <h1 className="view-title">Power Modes</h1>
+          <h1 className="view-title">{t('powerMode.title')}</h1>
         </div>
         <div className="card">
           <div className="empty-state">
@@ -178,10 +180,9 @@ export const PowerModeView: React.FC = () => {
       <div className="view-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="view-title">Power Modes</h1>
+            <h1 className="view-title">{t('powerMode.title')}</h1>
             <p className="view-subtitle">
-              Configure context-aware modes that automatically adjust transcription settings
-              based on the active application or URL
+              {t('powerMode.subtitle')}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
