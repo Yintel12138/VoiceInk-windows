@@ -7,3 +7,5 @@ export { AIEnhancementService, AI_PROVIDERS, BUILTIN_PROMPTS } from './ai-enhanc
 export { HotkeyService } from './hotkey-service';
 export { TranscriptionPipeline } from './transcription-pipeline';
 export { PowerModeService } from './power-mode-service';
+export { CustomSpeechApiService } from './custom-speech-api-service';
+export type { CustomSpeechApiConfig, CustomSpeechApiType, StreamingTranscriptionCallbacks } from './custom-speech-api-service';

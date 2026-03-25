@@ -56,6 +56,12 @@ export const APP_DEFAULTS: AppDefaultsType = {
   // Model
   prewarmModelOnWake: true,
   selectedTranscriptionModelId: '',
+
+  // Custom Speech API
+  customSpeechApiEnabled: false,
+  customSpeechApiType: 'http' as CustomSpeechApiConnectionType,
+  customSpeechApiUrl: '',
+  customSpeechApiKey: '',
 };
 
 export interface AppDefaultsType {
@@ -95,10 +101,17 @@ export interface AppDefaultsType {
   selectedEnhancementPromptId: string;
   prewarmModelOnWake: boolean;
   selectedTranscriptionModelId: string;
+
+  // Custom Speech API
+  customSpeechApiEnabled: boolean;
+  customSpeechApiType: CustomSpeechApiConnectionType;
+  customSpeechApiUrl: string;
+  customSpeechApiKey: string;
 }
 
 export type AppDefaultKey = keyof AppDefaultsType;
 
 export type RecorderType = 'mini' | 'notch';
+export type CustomSpeechApiConnectionType = 'http' | 'websocket';
 export type HotkeyMode = 'toggle' | 'pushToTalk' | 'hybrid';
 export type HotkeyOption = 'capsLock' | 'rightOption' | 'fn' | 'custom' | 'none';
