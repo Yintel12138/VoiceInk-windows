@@ -143,7 +143,7 @@ export class CustomSpeechApiService {
     if (this.activeWebSocket) {
       try {
         this.activeWebSocket.send(JSON.stringify({ type: 'end' }));
-      } catch { /* ignore */ }
+      } catch { /* Ignore send errors on close – the socket may already be closing */ }
       this.activeWebSocket.close();
       this.activeWebSocket = null;
     }
