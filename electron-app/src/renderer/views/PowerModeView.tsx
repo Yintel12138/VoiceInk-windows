@@ -191,14 +191,14 @@ export const PowerModeView: React.FC = () => {
                 className="btn btn-secondary"
                 onClick={() => setIsReordering(!isReordering)}
               >
-                {isReordering ? '✓ Done' : '↕ Reorder'}
+                {isReordering ? t('powerMode.done') : t('powerMode.reorder')}
               </button>
             )}
             <button
               className="btn btn-primary"
               onClick={() => { resetForm(); setShowAddForm(true); }}
             >
-              + Add Power Mode
+              {t('powerMode.addBtn')}
             </button>
           </div>
         </div>
@@ -208,25 +208,25 @@ export const PowerModeView: React.FC = () => {
       {showAddForm && (
         <div className="card">
           <div className="card-title">
-            {editingConfig ? 'Edit Power Mode' : 'New Power Mode'}
+            {editingConfig ? t('powerMode.editTitle') : t('powerMode.newTitle')}
           </div>
 
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Name</span>
+              <span className="setting-name">{t('powerMode.name')}</span>
             </div>
             <input
               className="input"
               style={{ maxWidth: '300px' }}
               value={newName}
               onChange={e => setNewName(e.target.value)}
-              placeholder="e.g., Code Editor, Email, Chat"
+              placeholder={t('powerMode.namePlaceholder')}
             />
           </div>
 
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Emoji</span>
+              <span className="setting-name">{t('powerMode.emoji')}</span>
             </div>
             <div className="emoji-picker">
               {EMOJI_OPTIONS.map(emoji => (
@@ -243,9 +243,9 @@ export const PowerModeView: React.FC = () => {
 
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">App Identifier</span>
+              <span className="setting-name">{t('powerMode.appIdentifier')}</span>
               <span className="setting-description">
-                Application name or bundle ID to auto-activate this mode
+                {t('powerMode.appIdentifierDesc')}
               </span>
             </div>
             <input
@@ -253,15 +253,15 @@ export const PowerModeView: React.FC = () => {
               style={{ maxWidth: '300px' }}
               value={newAppIdentifier}
               onChange={e => setNewAppIdentifier(e.target.value)}
-              placeholder="e.g., Visual Studio Code"
+              placeholder={t('powerMode.appIdentifierPlaceholder')}
             />
           </div>
 
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">URL Pattern</span>
+              <span className="setting-name">{t('powerMode.urlPattern')}</span>
               <span className="setting-description">
-                Browser URL pattern to auto-activate this mode
+                {t('powerMode.urlPatternDesc')}
               </span>
             </div>
             <input
@@ -269,35 +269,35 @@ export const PowerModeView: React.FC = () => {
               style={{ maxWidth: '300px' }}
               value={newUrlPattern}
               onChange={e => setNewUrlPattern(e.target.value)}
-              placeholder="e.g., github.com, docs.google.com"
+              placeholder={t('powerMode.urlPatternPlaceholder')}
             />
           </div>
 
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">Language</span>
+              <span className="setting-name">{t('powerMode.language')}</span>
             </div>
             <select
               className="select"
               value={newLanguage}
               onChange={e => setNewLanguage(e.target.value)}
             >
-              <option value="en">English</option>
-              <option value="zh">Chinese</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-              <option value="ja">Japanese</option>
-              <option value="ko">Korean</option>
+              <option value="en">{t('settings.languages.en')}</option>
+              <option value="zh">{t('settings.languages.zh')}</option>
+              <option value="es">{t('settings.languages.es')}</option>
+              <option value="fr">{t('settings.languages.fr')}</option>
+              <option value="de">{t('settings.languages.de')}</option>
+              <option value="ja">{t('settings.languages.ja')}</option>
+              <option value="ko">{t('settings.languages.ko')}</option>
             </select>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
             <button className="btn btn-primary" onClick={editingConfig ? saveEdit : addConfig}>
-              {editingConfig ? 'Save Changes' : 'Add Power Mode'}
+              {editingConfig ? t('powerMode.saveChanges') : t('powerMode.addBtn')}
             </button>
             <button className="btn btn-secondary" onClick={resetForm}>
-              Cancel
+              {t('powerMode.cancel')}
             </button>
           </div>
         </div>
@@ -308,17 +308,16 @@ export const PowerModeView: React.FC = () => {
         <div className="card">
           <div className="empty-state">
             <div className="empty-state-icon">⚡</div>
-            <div className="empty-state-text">No Power Modes Yet</div>
+            <div className="empty-state-text">{t('powerMode.noModesYet')}</div>
             <p className="empty-state-description">
-              Create power modes to automatically adjust transcription settings
-              based on your active application or browser URL.
+              {t('powerMode.noModesDesc')}
             </p>
             <button
               className="btn btn-primary"
               style={{ marginTop: '16px' }}
               onClick={() => { resetForm(); setShowAddForm(true); }}
             >
-              + Create Your First Power Mode
+              {t('powerMode.createFirst')}
             </button>
           </div>
         </div>
@@ -335,10 +334,10 @@ export const PowerModeView: React.FC = () => {
                   <div className="power-mode-name">{config.name}</div>
                   <div className="power-mode-badges">
                     {index === 0 && config.isEnabled && (
-                      <span className="badge badge-accent">Default</span>
+                      <span className="badge badge-accent">{t('powerMode.defaultBadge')}</span>
                     )}
                     {!config.isEnabled && (
-                      <span className="badge badge-outline">Disabled</span>
+                      <span className="badge badge-outline">{t('powerMode.disabledBadge')}</span>
                     )}
                   </div>
                 </div>
@@ -382,12 +381,12 @@ export const PowerModeView: React.FC = () => {
               </div>
               {config.appIdentifier && (
                 <div className="power-mode-detail">
-                  <span className="detail-label">App:</span> {config.appIdentifier}
+                  <span className="detail-label">{t('powerMode.appLabel')}</span> {config.appIdentifier}
                 </div>
               )}
               {config.urlPattern && (
                 <div className="power-mode-detail">
-                  <span className="detail-label">URL:</span> {config.urlPattern}
+                  <span className="detail-label">{t('powerMode.urlLabel')}</span> {config.urlPattern}
                 </div>
               )}
             </div>
