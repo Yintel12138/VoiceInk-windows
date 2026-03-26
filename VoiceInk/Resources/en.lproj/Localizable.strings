@@ -40,7 +40,273 @@
 "Success" = "Success";
 "Copy" = "Copy";
 "Paste" = "Paste";
+"Export" = "Export";
+"Import" = "Import";
+"Refresh" = "Refresh";
+"Active" = "Active";
+"Unavailable" = "Unavailable";
 
 /* About / Open Source */
 "Open Source" = "Open Source";
 "VoiceInk is free and open source" = "VoiceInk is free and open source";
+"MIT License" = "MIT License";
+"VoiceInk is free, open-source software. You can use it on all your devices, contribute to its development, or fork it for your own projects." = "VoiceInk is free, open-source software. You can use it on all your devices, contribute to its development, or fork it for your own projects.";
+"Resources" = "Resources";
+"GitHub" = "GitHub";
+"Changelog" = "Changelog";
+"Discord" = "Discord";
+"Email Support" = "Email Support";
+"Docs" = "Docs";
+
+/* Settings - Shortcuts */
+"Shortcuts" = "Shortcuts";
+"Shortcut 1" = "Shortcut 1";
+"Shortcut 2" = "Shortcut 2";
+"Add Second Shortcut" = "Add Second Shortcut";
+"Additional Shortcuts" = "Additional Shortcuts";
+"Paste Last Transcription (Original)" = "Paste Last Transcription (Original)";
+"Paste Last Transcription (Enhanced)" = "Paste Last Transcription (Enhanced)";
+"Retry Last Transcription" = "Retry Last Transcription";
+"Custom Cancel Shortcut" = "Custom Cancel Shortcut";
+"Shortcut" = "Shortcut";
+"Middle-Click Recording" = "Middle-Click Recording";
+"Activation Delay" = "Activation Delay";
+"ms" = "ms";
+
+/* Settings - Recording Feedback */
+"Recording Feedback" = "Recording Feedback";
+"Sound Feedback" = "Sound Feedback";
+"Mute Audio While Recording" = "Mute Audio While Recording";
+"Resume Delay" = "Resume Delay";
+"Restore Clipboard After Paste" = "Restore Clipboard After Paste";
+"Restore Delay" = "Restore Delay";
+"Use AppleScript Paste" = "Use AppleScript Paste";
+
+/* Settings - Interface */
+"Interface" = "Interface";
+"Recorder Style" = "Recorder Style";
+"Notch" = "Notch";
+"Mini" = "Mini";
+
+/* Settings - General */
+"General" = "General";
+"Hide Dock Icon" = "Hide Dock Icon";
+"Launch at Login" = "Launch at Login";
+"Auto-check Updates" = "Auto-check Updates";
+"Show Announcements" = "Show Announcements";
+"Check for Updates" = "Check for Updates";
+"Reset Onboarding" = "Reset Onboarding";
+"You'll see the introduction screens again the next time you launch the app." = "You'll see the introduction screens again the next time you launch the app.";
+
+/* Settings - Privacy */
+"Privacy" = "Privacy";
+"Control how VoiceInk handles your transcription data and audio recordings." = "Control how VoiceInk handles your transcription data and audio recordings.";
+
+/* Settings - Backup */
+"Backup" = "Backup";
+"Export Settings" = "Export Settings";
+"Import Settings" = "Import Settings";
+"Export or import all your settings, prompts, power modes, dictionary, and custom models." = "Export or import all your settings, prompts, power modes, dictionary, and custom models.";
+
+/* Settings - Diagnostics */
+"Diagnostics" = "Diagnostics";
+"Show in Finder" = "Show in Finder";
+"Export Logs" = "Export Logs";
+"Export Failed" = "Export Failed";
+
+/* Settings - Power Mode */
+"Apply custom settings based on active app or website." = "Apply custom settings based on active app or website.";
+"Auto-Restore Preferences" = "Auto-Restore Preferences";
+"After each recording session, revert preferences to what was configured before Power Mode was activated." = "After each recording session, revert preferences to what was configured before Power Mode was activated.";
+"Power Mode Still Active" = "Power Mode Still Active";
+"Got it" = "Got it";
+"Disable or remove your Power Modes first." = "Disable or remove your Power Modes first.";
+
+/* Settings - Experimental */
+"Experimental" = "Experimental";
+"Pause Media While Recording" = "Pause Media While Recording";
+"Pauses playing media when recording starts and resumes when done." = "Pauses playing media when recording starts and resumes when done.";
+
+/* Audio Input Settings */
+"Configure your microphone preferences" = "Configure your microphone preferences";
+"Input Mode" = "Input Mode";
+"Current Device" = "Current Device";
+"No device available" = "No device available";
+"Available Devices" = "Available Devices";
+"Prioritized Devices" = "Prioritized Devices";
+"Devices will be used in order of priority. If a device is unavailable, the next one will be tried. If no prioritized device is available, the built-in microphone will be used." = "Devices will be used in order of priority. If a device is unavailable, the next one will be tried. If no prioritized device is available, the built-in microphone will be used.";
+"No prioritized devices" = "No prioritized devices";
+"No additional devices available" = "No additional devices available";
+"No Audio Devices" = "No Audio Devices";
+"Connect an audio input device to get started" = "Connect an audio input device to get started";
+"Use your Mac's default input" = "Use your Mac's default input";
+"Select a specific input device" = "Select a specific input device";
+"Set up device priority order" = "Set up device priority order";
+
+/* Audio Cleanup Settings */
+"Auto-delete Transcripts" = "Auto-delete Transcripts";
+"Automatically delete transcript history based on the retention period you set." = "Automatically delete transcript history based on the retention period you set.";
+"Delete After" = "Delete After";
+"Immediately" = "Immediately";
+"1 hour" = "1 hour";
+"1 day" = "1 day";
+"3 days" = "3 days";
+"7 days" = "7 days";
+"14 days" = "14 days";
+"30 days" = "30 days";
+"Run Cleanup Now" = "Run Cleanup Now";
+"Analyzing..." = "Analyzing...";
+"Transcript Cleanup" = "Transcript Cleanup";
+"Cleanup complete." = "Cleanup complete.";
+"Auto-delete Audio Files" = "Auto-delete Audio Files";
+"Automatically delete audio recordings while keeping text transcripts intact." = "Automatically delete audio recordings while keeping text transcripts intact.";
+"Keep Audio For" = "Keep Audio For";
+"Audio Cleanup" = "Audio Cleanup";
+
+/* History View */
+"Toggle Sidebar" = "Toggle Sidebar";
+"Delete Selected Items?" = "Delete Selected Items?";
+"This action cannot be undone. Are you sure you want to delete %lld item?" = "This action cannot be undone. Are you sure you want to delete %lld item?";
+"This action cannot be undone. Are you sure you want to delete %lld items?" = "This action cannot be undone. Are you sure you want to delete %lld items?";
+"Toggle Inspector" = "Toggle Inspector";
+"Delete Selected Items?" = "Delete Selected Items?";
+"Search transcriptions" = "Search transcriptions";
+"No transcriptions" = "No transcriptions";
+"Loading..." = "Loading...";
+"Load More" = "Load More";
+"No Selection" = "No Selection";
+"Select a transcription to view details" = "Select a transcription to view details";
+"No Metadata" = "No Metadata";
+"Select All" = "Select All";
+"Deselect All" = "Deselect All";
+"Original" = "Original";
+"Enhanced" = "Enhanced";
+
+/* Enhancement Settings */
+"Enable Enhancement" = "Enable Enhancement";
+"Enhancement Prompts" = "Enhancement Prompts";
+"No prompts available" = "No prompts available";
+"Double-click to edit • Right-click for more options" = "Double-click to edit • Right-click for more options";
+"Add new prompt" = "Add new prompt";
+"Enhancement settings" = "Enhancement settings";
+
+/* Model Settings */
+"Output Format" = "Output Format";
+"Only supported for local Whisper models. Unlike GPT, Voice Models(whisper) follows the style of your prompt rather than instructions. Use examples of your desired output format instead of commands." = "Only supported for local Whisper models. Unlike GPT, Voice Models(whisper) follows the style of your prompt rather than instructions. Use examples of your desired output format instead of commands.";
+"Add Space After Paste" = "Add Space After Paste";
+"Automatic text formatting" = "Automatic text formatting";
+"Apply intelligent text formatting to break large block of text into paragraphs." = "Apply intelligent text formatting to break large block of text into paragraphs.";
+"Voice Activity Detection (VAD)" = "Voice Activity Detection (VAD)";
+"Detect speech segments and filter out silence to improve accuracy of local models." = "Detect speech segments and filter out silence to improve accuracy of local models.";
+"Prewarm model (Experimental)" = "Prewarm model (Experimental)";
+"Turn this on if transcriptions with local models are taking longer than expected. Runs silent background transcription on app launch and wake to trigger optimization." = "Turn this on if transcriptions with local models are taking longer than expected. Runs silent background transcription on app launch and wake to trigger optimization.";
+
+/* Model Management */
+"Recommended" = "Recommended";
+"Local" = "Local";
+"Cloud" = "Cloud";
+"Custom" = "Custom";
+"Model Settings" = "Model Settings";
+"Default Model" = "Default Model";
+"No model selected" = "No model selected";
+"Delete Custom Model" = "Delete Custom Model";
+"Delete Model" = "Delete Model";
+"Import Local Model…" = "Import Local Model…";
+"Local models don't work reliably on Intel Macs" = "Local models don't work reliably on Intel Macs";
+"Use Cloud" = "Use Cloud";
+"Select a Whisper ggml .bin model" = "Select a Whisper ggml .bin model";
+
+/* Metrics / Dashboard */
+"Loading metrics..." = "Loading metrics...";
+"No Transcriptions Yet" = "No Transcriptions Yet";
+"Start your first recording to unlock value insights." = "Start your first recording to unlock value insights.";
+"You have saved " = "You have saved ";
+" with VoiceInk" = " with VoiceInk";
+"Sessions Recorded" = "Sessions Recorded";
+"VoiceInk sessions completed" = "VoiceInk sessions completed";
+"Words Dictated" = "Words Dictated";
+"words generated" = "words generated";
+"Words Per Minute" = "Words Per Minute";
+"VoiceInk vs. typing by hand" = "VoiceInk vs. typing by hand";
+"Keystrokes Saved" = "Keystrokes Saved";
+"fewer keystrokes" = "fewer keystrokes";
+"Time savings coming soon" = "Time savings coming soon";
+"Your VoiceInk journey starts with your first recording." = "Your VoiceInk journey starts with your first recording.";
+"Help & Resources" = "Help & Resources";
+"Recommended Models" = "Recommended Models";
+"YouTube Videos & Guides" = "YouTube Videos & Guides";
+"Documentation" = "Documentation";
+"Feedback or Issues?" = "Feedback or Issues?";
+"Copied!" = "Copied!";
+"Copy System Info" = "Copy System Info";
+
+/* Onboarding */
+"Welcome to the Future of Typing" = "Welcome to the Future of Typing";
+"A New Way to Type" = "A New Way to Type";
+"Get Started" = "Get Started";
+"Skip Tour" = "Skip Tour";
+"Your Writing Assistant" = "Your Writing Assistant";
+"Your Vibe-Coding Assistant" = "Your Vibe-Coding Assistant";
+"Works Everywhere on Mac with a click" = "Works Everywhere on Mac with a click";
+"100% offline & private" = "100% offline & private";
+"Download AI Model" = "Download AI Model";
+"We'll download the optimized model to get you started." = "We'll download the optimized model to get you started.";
+"Speed" = "Speed";
+"Accuracy" = "Accuracy";
+"Skip for now" = "Skip for now";
+"Continue" = "Continue";
+"Downloading..." = "Downloading...";
+"Set as Default" = "Set as Default";
+"Download Model" = "Download Model";
+"RAM" = "RAM";
+
+/* Permissions */
+"App Permissions" = "App Permissions";
+"VoiceInk requires the following permissions to function properly" = "VoiceInk requires the following permissions to function properly";
+"Microphone Access" = "Microphone Access";
+"Allow VoiceInk to record your voice for transcription" = "Allow VoiceInk to record your voice for transcription";
+"Request Permission" = "Request Permission";
+"Open System Settings" = "Open System Settings";
+"Accessibility Access" = "Accessibility Access";
+"Allow VoiceInk to paste transcribed text directly at your cursor position" = "Allow VoiceInk to paste transcribed text directly at your cursor position";
+"Screen Recording Access" = "Screen Recording Access";
+"Allow VoiceInk to understand context from your screen for transcript Enhancement" = "Allow VoiceInk to understand context from your screen for transcript Enhancement";
+"Keyboard Shortcut" = "Keyboard Shortcut";
+"Set up a keyboard shortcut to use VoiceInk anywhere" = "Set up a keyboard shortcut to use VoiceInk anywhere";
+"Configure Shortcut" = "Configure Shortcut";
+"Microphone Selection" = "Microphone Selection";
+"Select the audio input device you want to use with VoiceInk." = "Select the audio input device you want to use with VoiceInk.";
+"For best results, using your Mac's built-in microphone is recommended." = "For best results, using your Mac's built-in microphone is recommended.";
+"No microphones found" = "No microphones found";
+"Enable your microphone to start speaking and converting your voice to text instantly." = "Enable your microphone to start speaking and converting your voice to text instantly.";
+
+/* Vocabulary / Dictionary */
+"Add words to help VoiceInk recognize them properly. (Requires AI enhancement)" = "Add words to help VoiceInk recognize them properly. (Requires AI enhancement)";
+"Add word to vocabulary" = "Add word to vocabulary";
+"Add word" = "Add word";
+"Vocabulary Words (%lld)" = "Vocabulary Words (%lld)";
+"Sort alphabetically" = "Sort alphabetically";
+"Vocabulary" = "Vocabulary";
+"Remove word" = "Remove word";
+"Define word replacements to automatically replace specific words or phrases" = "Define word replacements to automatically replace specific words or phrases";
+"Original text (use commas for multiple)" = "Original text (use commas for multiple)";
+"Replacement text" = "Replacement text";
+"Add word replacement" = "Add word replacement";
+"Replacement" = "Replacement";
+"Sort by original" = "Sort by original";
+"Sort by replacement" = "Sort by replacement";
+"Word Replacement" = "Word Replacement";
+"How to use Word Replacements" = "How to use Word Replacements";
+"Separate multiple originals with commas:" = "Separate multiple originals with commas:";
+"Examples" = "Examples";
+
+/* Audio Transcribe View */
+"Audio file selected: " = "Audio file selected: ";
+"Prompt:" = "Prompt:";
+"Drop audio or video file here" = "Drop audio or video file here";
+"or" = "or";
+"Choose File" = "Choose File";
+"Supported formats: WAV, MP3, M4A, AIFF, MP4, MOV, AAC, FLAC, CAF, AMR, OGG, OPUS, 3GP" = "Supported formats: WAV, MP3, M4A, AIFF, MP4, MOV, AAC, FLAC, CAF, AMR, OGG, OPUS, 3GP";
+"AI Enhancement" = "AI Enhancement";
+"Start Transcription" = "Start Transcription";
+"Choose Different File" = "Choose Different File";
