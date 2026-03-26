@@ -11,9 +11,11 @@
  * - Search/filter
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { VocabularyWord, WordReplacement } from '../../shared/models/dictionary';
 
 export const DictionaryView: React.FC = () => {
+  const { t } = useTranslation();
   const [words, setWords] = useState<VocabularyWord[]>([]);
   const [replacements, setReplacements] = useState<WordReplacement[]>([]);
   const [newWord, setNewWord] = useState('');
@@ -184,9 +186,9 @@ export const DictionaryView: React.FC = () => {
       />
 
       <div className="view-header">
-        <h1 className="view-title">📖 Dictionary</h1>
+        <h1 className="view-title">{t('dictionary.title')}</h1>
         <p className="view-subtitle">
-          Custom vocabulary and automatic word replacements
+          {t('dictionary.subtitle')}
         </p>
       </div>
 
@@ -195,12 +197,8 @@ export const DictionaryView: React.FC = () => {
         <div className="hero-content">
           <div className="hero-icon">📖</div>
           <div className="hero-text">
-            <h3>Improve Transcription Accuracy</h3>
-            <p>
-              Add custom words (like names, technical terms, abbreviations) to help the
-              transcription model recognize specialized vocabulary. Set up word replacements
-              to automatically correct common misheard words.
-            </p>
+            <h3>{t('dictionary.heroTitle')}</h3>
+            <p>{t('dictionary.heroDesc')}</p>
           </div>
         </div>
       </div>
@@ -211,20 +209,20 @@ export const DictionaryView: React.FC = () => {
           className={`btn ${activeTab === 'words' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('words')}
         >
-          Vocabulary ({words.length})
+          {t('dictionary.vocabulary', { count: words.length })}
         </button>
         <button
           className={`btn ${activeTab === 'replacements' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('replacements')}
         >
-          Replacements ({replacements.length})
+          {t('dictionary.replacements', { count: replacements.length })}
         </button>
         <div style={{ flex: 1 }} />
         <button className="btn btn-secondary" onClick={handleImport}>
-          📥 Import
+          📥 {t('common.import')}
         </button>
         <button className="btn btn-secondary" onClick={handleExport}>
-          📤 Export
+          📤 {t('common.export')}
         </button>
       </div>
 
@@ -233,7 +231,7 @@ export const DictionaryView: React.FC = () => {
         <span className="search-icon">🔍</span>
         <input
           className="search-input"
-          placeholder={activeTab === 'words' ? 'Search vocabulary...' : 'Search replacements...'}
+          placeholder={activeTab === 'words' ? t('dictionary.searchVocab') : t('dictionary.searchReplacements')}
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
         />
@@ -245,19 +243,19 @@ export const DictionaryView: React.FC = () => {
       {activeTab === 'words' ? (
         <div className="card">
           <div className="card-title">
-            Custom Vocabulary ({filteredWords.length} words)
+            {t('dictionary.customVocab', { count: filteredWords.length })}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             <input
               className="input"
-              placeholder="Add a custom word..."
+              placeholder={t('dictionary.addWord')}
               value={newWord}
               onChange={(e) => setNewWord(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddWord()}
             />
             <button className="btn btn-primary" onClick={handleAddWord} disabled={!newWord.trim()}>
-              + Add
+              {t('dictionary.addBtn')}
             </button>
           </div>
 
@@ -265,7 +263,7 @@ export const DictionaryView: React.FC = () => {
             <div className="empty-state">
               <div className="empty-state-icon">📝</div>
               <div className="empty-state-text">
-                {searchQuery ? 'No matching words found.' : 'No custom words yet. Add words to improve transcription accuracy.'}
+                {searchQuery ? t('dictionary.noMatchingWords') : t('dictionary.noWords')}
               </div>
             </div>
           ) : (
@@ -287,20 +285,20 @@ export const DictionaryView: React.FC = () => {
       ) : (
         <div className="card">
           <div className="card-title">
-            Word Replacements ({filteredReplacements.length} rules)
+            {t('dictionary.wordReplacements', { count: filteredReplacements.length })}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
             <input
               className="input"
-              placeholder="Original word..."
+              placeholder={t('dictionary.originalWord')}
               value={newOriginal}
               onChange={(e) => setNewOriginal(e.target.value)}
             />
             <span className="replacement-arrow">→</span>
             <input
               className="input"
-              placeholder="Replacement..."
+              placeholder={t('dictionary.replacement')}
               value={newReplacement}
               onChange={(e) => setNewReplacement(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddReplacement()}
@@ -310,7 +308,7 @@ export const DictionaryView: React.FC = () => {
               onClick={handleAddReplacement}
               disabled={!newOriginal.trim() || !newReplacement.trim()}
             >
-              + Add
+              {t('dictionary.addBtn')}
             </button>
           </div>
 
@@ -318,7 +316,7 @@ export const DictionaryView: React.FC = () => {
             <div className="empty-state">
               <div className="empty-state-icon">🔄</div>
               <div className="empty-state-text">
-                {searchQuery ? 'No matching replacements found.' : 'No replacement rules. Add rules to automatically replace words in transcriptions.'}
+                {searchQuery ? t('dictionary.noMatchingReplacements') : t('dictionary.noReplacements')}
               </div>
             </div>
           ) : (
@@ -340,10 +338,10 @@ export const DictionaryView: React.FC = () => {
                         onKeyDown={e => e.key === 'Enter' && saveEditReplacement()}
                       />
                       <button className="btn btn-primary btn-small" onClick={saveEditReplacement}>
-                        Save
+                        {t('dictionary.saveBtn')}
                       </button>
                       <button className="btn btn-secondary btn-small" onClick={() => setEditingReplacementId(null)}>
-                        Cancel
+                        {t('dictionary.cancelBtn')}
                       </button>
                     </div>
                   ) : (
@@ -357,14 +355,14 @@ export const DictionaryView: React.FC = () => {
                         <button
                           className="btn-icon btn-icon-small"
                           onClick={() => startEditReplacement(r)}
-                          title="Edit"
+                          title={t('dictionary.editTitle')}
                         >
                           ✏️
                         </button>
                         <button
                           className="btn-icon btn-icon-small"
                           onClick={() => handleDeleteReplacement(r.id)}
-                          title="Delete"
+                          title={t('dictionary.deleteTitle')}
                         >
                           🗑️
                         </button>

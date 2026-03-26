@@ -11,6 +11,7 @@
  * - Error handling and user feedback
  */
 import React, { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TranscriptionModel } from '../../shared/types';
 
 type ModelCategory = 'all' | 'whisper' | 'parakeet' | 'custom';
@@ -44,6 +45,7 @@ const PREDEFINED_MODEL_IDS = [
 ];
 
 export const ModelsView: React.FC = () => {
+  const { t } = useTranslation();
   const [models, setModels] = useState<TranscriptionModel[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ModelCategory>('all');
   const [defaultModelId, setDefaultModelId] = useState<string>('');
@@ -223,8 +225,8 @@ export const ModelsView: React.FC = () => {
     return (
       <div className="view-container">
         <div className="view-header">
-          <h1 className="view-title">AI Models</h1>
-          <p className="view-subtitle">Loading models...</p>
+          <h1 className="view-title">{t('models.title')}</h1>
+          <p className="view-subtitle">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -235,8 +237,8 @@ export const ModelsView: React.FC = () => {
       <div className="view-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="view-title">AI Models</h1>
-            <p className="view-subtitle">Manage transcription models for local speech-to-text</p>
+            <h1 className="view-title">{t('models.title')}</h1>
+            <p className="view-subtitle">{t('models.subtitle')}</p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn-secondary" onClick={() => setShowAddCustom(!showAddCustom)}>

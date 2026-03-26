@@ -11,6 +11,7 @@
  * - Transcription result display
  */
 import React, { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type TranscribeState = 'idle' | 'fileSelected' | 'processing' | 'complete' | 'error';
 
@@ -27,6 +28,7 @@ const SUPPORTED_FORMATS = [
 ];
 
 export const TranscribeAudioView: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = useState<TranscribeState>('idle');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -59,7 +61,7 @@ export const TranscribeAudioView: React.FC = () => {
   const selectFile = (file: File) => {
     const ext = file.name.split('.').pop()?.toUpperCase() || '';
     if (!SUPPORTED_FORMATS.includes(ext)) {
-      setError(`Unsupported file format: .${ext}. Supported formats: ${SUPPORTED_FORMATS.join(', ')}`);
+      setError(t('transcribeAudio.unsupportedFormat', { ext, formats: SUPPORTED_FORMATS.join(', ') }));
       setState('error');
       return;
     }
@@ -83,15 +85,15 @@ export const TranscribeAudioView: React.FC = () => {
     if (!selectedFile) return;
     setState('processing');
     setProgress(0);
-    setProgressMessage('Preparing audio file...');
+    setProgressMessage(t('transcribeAudio.processing.preparing'));
 
     // Simulate transcription process (actual implementation requires whisper.cpp backend)
     const steps = [
-      { progress: 20, message: 'Loading audio file...' },
-      { progress: 40, message: 'Extracting audio data...' },
-      { progress: 60, message: 'Running transcription model...' },
-      { progress: 80, message: enhanceEnabled ? 'Enhancing with AI...' : 'Finalizing...' },
-      { progress: 100, message: 'Complete!' },
+      { progress: 20, message: t('transcribeAudio.processing.loading') },
+      { progress: 40, message: t('transcribeAudio.processing.extracting') },
+      { progress: 60, message: t('transcribeAudio.processing.transcribing') },
+      { progress: 80, message: enhanceEnabled ? t('transcribeAudio.processing.enhancing') : t('transcribeAudio.processing.finalizing') },
+      { progress: 100, message: t('transcribeAudio.processing.complete') },
     ];
 
     for (const step of steps) {
@@ -132,9 +134,9 @@ export const TranscribeAudioView: React.FC = () => {
   return (
     <div className="view-container">
       <div className="view-header">
-        <h1 className="view-title">Transcribe Audio</h1>
+        <h1 className="view-title">{t('transcribeAudio.title')}</h1>
         <p className="view-subtitle">
-          Transcribe audio and video files using AI speech recognition
+          {t('transcribeAudio.subtitle')}
         </p>
       </div>
 
@@ -155,22 +157,22 @@ export const TranscribeAudioView: React.FC = () => {
           onDrop={handleDrop}
         >
           <div className="drop-zone-icon">🎵</div>
-          <div className="drop-zone-title">Drop audio or video file here</div>
+          <div className="drop-zone-title">{t('transcribeAudio.dropTitle')}</div>
           <div className="drop-zone-subtitle">
-            or click the button below to choose a file
+            {t('transcribeAudio.dropSubtitle')}
           </div>
           <button className="btn btn-primary" onClick={handleFileSelect} style={{ marginTop: '16px' }}>
-            Choose File
+            {t('transcribeAudio.chooseFile')}
           </button>
           <div className="drop-zone-formats">
-            Supported: {SUPPORTED_FORMATS.join(', ')}
+            {t('transcribeAudio.supportedFormatsPrefix')} {SUPPORTED_FORMATS.join(', ')}
           </div>
         </div>
       )}
 
       {state === 'fileSelected' && selectedFile && (
         <div className="card">
-          <div className="card-title">Selected File</div>
+          <div className="card-title">{t('transcribeAudio.selectedFile')}</div>
           <div className="file-info">
             <div className="file-info-icon">📄</div>
             <div className="file-info-details">
@@ -183,9 +185,9 @@ export const TranscribeAudioView: React.FC = () => {
 
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">AI Enhancement</span>
+              <span className="setting-name">{t('transcribeAudio.aiEnhancement')}</span>
               <span className="setting-description">
-                Enhance transcription with AI after processing
+                {t('transcribeAudio.aiEnhancementDesc')}
               </span>
             </div>
             <label className="toggle-switch">
@@ -200,13 +202,13 @@ export const TranscribeAudioView: React.FC = () => {
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
             <button className="btn btn-primary" onClick={startTranscription}>
-              ▶ Start Transcription
+              {t('transcribeAudio.startTranscription')}
             </button>
             <button className="btn btn-secondary" onClick={handleFileSelect}>
-              Choose Different File
+              {t('transcribeAudio.chooseDifferentFile')}
             </button>
             <button className="btn btn-secondary" onClick={resetState}>
-              Cancel
+              {t('transcribeAudio.cancel')}
             </button>
           </div>
         </div>
@@ -214,7 +216,7 @@ export const TranscribeAudioView: React.FC = () => {
 
       {state === 'processing' && (
         <div className="card">
-          <div className="card-title">Processing</div>
+          <div className="card-title">{t('transcribeAudio.processing')}</div>
           <div className="progress-container">
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: `${progress}%` }} />
@@ -228,12 +230,12 @@ export const TranscribeAudioView: React.FC = () => {
       {state === 'complete' && result && (
         <>
           <div className="card">
-            <div className="card-title">Transcription Result</div>
+            <div className="card-title">{t('transcribeAudio.transcriptionResult')}</div>
             <div className="transcription-result">
               <div className="result-text">{result.text}</div>
               <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                 <button className="btn btn-primary" onClick={() => copyResult(result.text)}>
-                  📋 Copy
+                  {t('transcribeAudio.copy')}
                 </button>
               </div>
             </div>
@@ -241,12 +243,12 @@ export const TranscribeAudioView: React.FC = () => {
 
           {result.enhancedText && (
             <div className="card">
-              <div className="card-title">Enhanced Result</div>
+              <div className="card-title">{t('transcribeAudio.enhancedResult')}</div>
               <div className="transcription-result">
                 <div className="result-text">{result.enhancedText}</div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button className="btn btn-primary" onClick={() => copyResult(result.enhancedText!)}>
-                    📋 Copy Enhanced
+                    {t('transcribeAudio.copyEnhanced')}
                   </button>
                 </div>
               </div>
@@ -255,10 +257,10 @@ export const TranscribeAudioView: React.FC = () => {
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
             <button className="btn btn-primary" onClick={handleFileSelect}>
-              Transcribe Another File
+              {t('transcribeAudio.transcribeAnother')}
             </button>
             <button className="btn btn-secondary" onClick={resetState}>
-              Start Over
+              {t('transcribeAudio.startOver')}
             </button>
           </div>
         </>
@@ -266,10 +268,10 @@ export const TranscribeAudioView: React.FC = () => {
 
       {state === 'error' && error && (
         <div className="card" style={{ borderColor: 'var(--danger)' }}>
-          <div className="card-title" style={{ color: 'var(--danger)' }}>Error</div>
+          <div className="card-title" style={{ color: 'var(--danger)' }}>{t('transcribeAudio.errorTitle')}</div>
           <div className="error-message">{error}</div>
           <button className="btn btn-secondary" onClick={resetState} style={{ marginTop: '12px' }}>
-            Try Again
+            {t('transcribeAudio.tryAgain')}
           </button>
         </div>
       )}

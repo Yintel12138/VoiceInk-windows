@@ -12,6 +12,7 @@
  * - Context toggles (Clipboard, Screen)
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CustomPrompt, AIProvider } from '../../shared/types';
 
 const AI_PROVIDERS: AIProvider[] = [
@@ -97,6 +98,7 @@ const BUILT_IN_PROMPTS: CustomPrompt[] = [
 ];
 
 export const EnhancementView: React.FC = () => {
+  const { t } = useTranslation();
   const [isEnabled, setIsEnabled] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState('openai');
   const [selectedModelId, setSelectedModelId] = useState('gpt-4o-mini');
@@ -228,9 +230,9 @@ export const EnhancementView: React.FC = () => {
   return (
     <div className="view-container">
       <div className="view-header">
-        <h1 className="view-title">AI Enhancement</h1>
+        <h1 className="view-title">{t('enhancement.title')}</h1>
         <p className="view-subtitle">
-          Configure AI-powered text enhancement after transcription
+          {t('enhancement.subtitle')}
         </p>
       </div>
 
@@ -238,9 +240,9 @@ export const EnhancementView: React.FC = () => {
       <div className="card">
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Enable AI Enhancement</span>
+            <span className="setting-name">{t('enhancement.enable')}</span>
             <span className="setting-description">
-              Enhance transcribed text using AI before pasting
+              {t('enhancement.enableDesc')}
             </span>
           </div>
           <label className="toggle-switch">
@@ -254,7 +256,7 @@ export const EnhancementView: React.FC = () => {
         <>
           {/* AI Provider Selection */}
           <div className="card">
-            <div className="card-title">AI Provider</div>
+            <div className="card-title">{t('enhancement.provider.title')}</div>
             <div className="provider-grid">
               {AI_PROVIDERS.map(provider => (
                 <div
@@ -263,9 +265,9 @@ export const EnhancementView: React.FC = () => {
                   onClick={() => selectProvider(provider.id)}
                 >
                   <div className="provider-name">{provider.displayName}</div>
-                  <div className="provider-models">{provider.models.length} models</div>
+                  <div className="provider-models">{provider.models.length} {t('enhancement.provider.models')}</div>
                   {!provider.requiresAPIKey && (
-                    <span className="badge badge-outline" style={{ marginTop: '4px' }}>Free / Local</span>
+                    <span className="badge badge-outline" style={{ marginTop: '4px' }}>{t('enhancement.provider.freeLocal')}</span>
                   )}
                 </div>
               ))}
@@ -275,9 +277,9 @@ export const EnhancementView: React.FC = () => {
             {selectedProvider?.requiresAPIKey && (
               <div className="setting-row" style={{ marginTop: '16px' }}>
                 <div className="setting-label">
-                  <span className="setting-name">API Key for {selectedProvider.displayName}</span>
+                  <span className="setting-name">{t('enhancement.provider.apiKey', { name: selectedProvider.displayName })}</span>
                   <span className="setting-description">
-                    Required to use {selectedProvider.displayName} models
+                    {t('enhancement.provider.apiKeyDesc', { name: selectedProvider.displayName })}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -286,7 +288,7 @@ export const EnhancementView: React.FC = () => {
                     type={showApiKey ? 'text' : 'password'}
                     value={apiKeys[selectedProviderId] || ''}
                     onChange={e => setApiKeys(prev => ({ ...prev, [selectedProviderId]: e.target.value }))}
-                    placeholder={`Enter ${selectedProvider.displayName} API key`}
+                    placeholder={t('enhancement.provider.apiKeyPlaceholder', { name: selectedProvider.displayName })}
                     style={{ minWidth: '300px' }}
                   />
                   <button
@@ -302,7 +304,7 @@ export const EnhancementView: React.FC = () => {
             {/* Model Selection */}
             <div className="setting-row" style={{ marginTop: '12px' }}>
               <div className="setting-label">
-                <span className="setting-name">AI Model</span>
+                <span className="setting-name">{t('enhancement.model')}</span>
               </div>
               <select className="select" value={selectedModelId} onChange={e => selectModel(e.target.value)}>
                 {selectedProvider?.models.map(m => (
@@ -315,9 +317,9 @@ export const EnhancementView: React.FC = () => {
           {/* Enhancement Prompts */}
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div className="card-title" style={{ margin: 0 }}>Enhancement Prompts</div>
+              <div className="card-title" style={{ margin: 0 }}>{t('enhancement.prompts.title')}</div>
               <button className="btn btn-primary btn-small" onClick={() => openPromptEditor()}>
-                + Add Prompt
+                {t('enhancement.prompts.addPrompt')}
               </button>
             </div>
 
@@ -338,7 +340,7 @@ export const EnhancementView: React.FC = () => {
                         className="btn-icon btn-icon-small"
                         onClick={e => { e.stopPropagation(); movePrompt(index, 'up'); }}
                         disabled={index === 0}
-                        title="Move up"
+                        title={t('enhancement.prompts.moveUp')}
                       >
                         ↑
                       </button>
@@ -346,7 +348,7 @@ export const EnhancementView: React.FC = () => {
                         className="btn-icon btn-icon-small"
                         onClick={e => { e.stopPropagation(); movePrompt(index, 'down'); }}
                         disabled={index === prompts.length - 1}
-                        title="Move down"
+                        title={t('enhancement.prompts.moveDown')}
                       >
                         ↓
                       </button>
@@ -355,14 +357,14 @@ export const EnhancementView: React.FC = () => {
                           <button
                             className="btn-icon btn-icon-small"
                             onClick={e => { e.stopPropagation(); openPromptEditor(prompt); }}
-                            title="Edit"
+                            title={t('enhancement.prompts.edit')}
                           >
                             ✏️
                           </button>
                           <button
                             className="btn-icon btn-icon-small"
                             onClick={e => { e.stopPropagation(); deletePrompt(prompt.id); }}
-                            title="Delete"
+                            title={t('enhancement.prompts.delete')}
                           >
                             🗑️
                           </button>
@@ -386,46 +388,46 @@ export const EnhancementView: React.FC = () => {
           {showPromptEditor && (
             <div className="card prompt-editor-panel">
               <div className="card-title">
-                {editingPrompt ? 'Edit Prompt' : 'New Prompt'}
+                {editingPrompt ? t('enhancement.prompts.editTitle') : t('enhancement.prompts.newTitle')}
               </div>
               <div className="setting-row">
                 <div className="setting-label">
-                  <span className="setting-name">Name</span>
+                  <span className="setting-name">{t('enhancement.prompts.name')}</span>
                 </div>
                 <input
                   className="input"
                   value={promptName}
                   onChange={e => setPromptName(e.target.value)}
-                  placeholder="Prompt name"
+                  placeholder={t('enhancement.prompts.namePlaceholder')}
                 />
               </div>
               <div className="prompt-editor-field">
-                <label className="setting-name">System Prompt</label>
+                <label className="setting-name">{t('enhancement.prompts.systemPrompt')}</label>
                 <textarea
                   className="textarea"
                   rows={4}
                   value={promptSystem}
                   onChange={e => setPromptSystem(e.target.value)}
-                  placeholder="You are a helpful assistant that..."
+                  placeholder={t('enhancement.prompts.systemPlaceholder')}
                 />
               </div>
               <div className="prompt-editor-field">
-                <label className="setting-name">User Prompt Template</label>
+                <label className="setting-name">{t('enhancement.prompts.userTemplate')}</label>
                 <textarea
                   className="textarea"
                   rows={3}
                   value={promptTemplate}
                   onChange={e => setPromptTemplate(e.target.value)}
-                  placeholder="Use {{text}} as placeholder for the transcription"
+                  placeholder={t('enhancement.prompts.userPlaceholder')}
                 />
-                <span className="setting-description">Use {'{{text}}'} for the transcribed text</span>
+                <span className="setting-description">{t('enhancement.prompts.userDesc')}</span>
               </div>
               <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                 <button className="btn btn-primary" onClick={savePrompt}>
-                  {editingPrompt ? 'Save Changes' : 'Create Prompt'}
+                  {editingPrompt ? t('enhancement.prompts.saveChanges') : t('enhancement.prompts.createPrompt')}
                 </button>
                 <button className="btn btn-secondary" onClick={() => setShowPromptEditor(false)}>
-                  Cancel
+                  {t('enhancement.prompts.cancel')}
                 </button>
               </div>
             </div>
@@ -433,12 +435,12 @@ export const EnhancementView: React.FC = () => {
 
           {/* Context Settings */}
           <div className="card">
-            <div className="card-title">Context Awareness</div>
+            <div className="card-title">{t('enhancement.context.title')}</div>
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Clipboard Context</span>
+                <span className="setting-name">{t('enhancement.context.clipboard')}</span>
                 <span className="setting-description">
-                  Include clipboard contents as context for AI enhancement
+                  {t('enhancement.context.clipboardDesc')}
                 </span>
               </div>
               <label className="toggle-switch">
@@ -452,9 +454,9 @@ export const EnhancementView: React.FC = () => {
             </div>
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Screen Context</span>
+                <span className="setting-name">{t('enhancement.context.screen')}</span>
                 <span className="setting-description">
-                  Capture screen content as context for smarter enhancements
+                  {t('enhancement.context.screenDesc')}
                 </span>
               </div>
               <label className="toggle-switch">
@@ -470,12 +472,12 @@ export const EnhancementView: React.FC = () => {
 
           {/* Shortcuts */}
           <div className="card">
-            <div className="card-title">Shortcuts</div>
+            <div className="card-title">{t('enhancement.shortcuts.title')}</div>
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Toggle Enhancement Shortcut</span>
+                <span className="setting-name">{t('enhancement.shortcuts.toggle')}</span>
                 <span className="setting-description">
-                  Quick toggle AI enhancement with keyboard shortcut
+                  {t('enhancement.shortcuts.toggleDesc')}
                 </span>
               </div>
               <label className="toggle-switch">

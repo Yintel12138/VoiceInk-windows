@@ -10,6 +10,7 @@
  * - Subscription management
  */
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type LicenseStatus = 'trial' | 'active' | 'expired' | 'none';
 
@@ -21,20 +22,22 @@ interface LicenseInfo {
   trialDaysRemaining?: number;
 }
 
-const FEATURES_COMPARISON = [
-  { name: 'Local transcription', free: true, pro: true },
-  { name: 'Custom vocabulary', free: true, pro: true },
-  { name: 'Word replacements', free: true, pro: true },
-  { name: 'Cloud transcription providers', free: false, pro: true },
-  { name: 'AI text enhancement', free: false, pro: true },
-  { name: 'Power Modes', free: false, pro: true },
-  { name: 'Screen context awareness', free: false, pro: true },
-  { name: 'Custom enhancement prompts', free: false, pro: true },
-  { name: 'Priority support', free: false, pro: true },
-  { name: 'Unlimited history', free: false, pro: true },
-];
-
 export const LicenseView: React.FC = () => {
+  const { t } = useTranslation();
+
+  const FEATURES_COMPARISON = [
+    { key: 'localTranscription', free: true, pro: true },
+    { key: 'customVocabulary', free: true, pro: true },
+    { key: 'wordReplacements', free: true, pro: true },
+    { key: 'cloudTranscription', free: false, pro: true },
+    { key: 'aiEnhancement', free: false, pro: true },
+    { key: 'powerModes', free: false, pro: true },
+    { key: 'screenContext', free: false, pro: true },
+    { key: 'customPrompts', free: false, pro: true },
+    { key: 'prioritySupport', free: false, pro: true },
+    { key: 'unlimitedHistory', free: false, pro: true },
+  ];
+
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo>({
     status: 'trial',
     trialDaysRemaining: 7,
@@ -63,7 +66,7 @@ export const LicenseView: React.FC = () => {
       });
       setActivationError(null);
     } else {
-      setActivationError('Invalid license key. Keys should start with "VK-".');
+      setActivationError(t('license.activate.invalidKey'));
     }
     setIsActivating(false);
   };
@@ -84,10 +87,10 @@ export const LicenseView: React.FC = () => {
 
   const getStatusText = () => {
     switch (licenseInfo.status) {
-      case 'active': return 'Active';
-      case 'trial': return `Trial (${licenseInfo.trialDaysRemaining} days remaining)`;
-      case 'expired': return 'Expired';
-      default: return 'Not Activated';
+      case 'active': return t('license.status.active');
+      case 'trial': return t('license.status.trial', { days: licenseInfo.trialDaysRemaining });
+      case 'expired': return t('license.status.expired');
+      default: return t('license.status.notActivated');
     }
   };
 
@@ -95,16 +98,16 @@ export const LicenseView: React.FC = () => {
     <div className="view-container">
       <div className="view-header">
         <h1 className="view-title">
-          VoiceInk <span className="pro-badge">PRO</span>
+          {t('license.title')} <span className="pro-badge">PRO</span>
         </h1>
         <p className="view-subtitle">
-          Unlock the full power of VoiceInk with a Pro license
+          {t('license.subtitle')}
         </p>
       </div>
 
       {/* License Status */}
       <div className="card">
-        <div className="card-title">License Status</div>
+        <div className="card-title">{t('license.status.title')}</div>
         <div className="license-status-row">
           <div className="license-status-indicator" style={{ backgroundColor: getStatusColor() }}>
             {licenseInfo.status === 'active' ? '✓' : licenseInfo.status === 'trial' ? '⏱' : '✕'}
@@ -118,7 +121,7 @@ export const LicenseView: React.FC = () => {
             )}
             {licenseInfo.expiresAt && (
               <div className="license-status-expiry">
-                Expires: {new Date(licenseInfo.expiresAt).toLocaleDateString()}
+                {t('license.status.expires', { date: new Date(licenseInfo.expiresAt).toLocaleDateString() })}
               </div>
             )}
           </div>
@@ -133,8 +136,8 @@ export const LicenseView: React.FC = () => {
           </div>
           <div className="trial-banner-text">
             {licenseInfo.trialDaysRemaining <= 3
-              ? `Your trial expires in ${licenseInfo.trialDaysRemaining} days. Activate a license to continue using Pro features.`
-              : `You have ${licenseInfo.trialDaysRemaining} days remaining in your trial. Enjoy all Pro features!`
+              ? t('license.trial.expiringSoon', { days: licenseInfo.trialDaysRemaining })
+              : t('license.trial.remaining', { days: licenseInfo.trialDaysRemaining })
             }
           </div>
         </div>
@@ -143,13 +146,13 @@ export const LicenseView: React.FC = () => {
       {/* License Key Input */}
       {licenseInfo.status !== 'active' && (
         <div className="card">
-          <div className="card-title">Activate License</div>
+          <div className="card-title">{t('license.activate.title')}</div>
           <div className="license-input-row">
             <input
               className="input"
               value={licenseKey}
               onChange={e => setLicenseKey(e.target.value)}
-              placeholder="Enter your license key (e.g., VK-XXXX-XXXX-XXXX)"
+              placeholder={t('license.activate.placeholder')}
               onKeyDown={e => e.key === 'Enter' && activateLicense()}
               disabled={isActivating}
             />
@@ -158,7 +161,7 @@ export const LicenseView: React.FC = () => {
               onClick={activateLicense}
               disabled={isActivating || !licenseKey.trim()}
             >
-              {isActivating ? '⏳ Activating...' : '🔑 Activate'}
+              {isActivating ? t('license.activate.activating') : t('license.activate.activateBtn')}
             </button>
           </div>
           {activationError && (
@@ -167,8 +170,8 @@ export const LicenseView: React.FC = () => {
             </div>
           )}
           <p className="setting-description" style={{ marginTop: '12px' }}>
-            Don&apos;t have a license? <a href="#" onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/pricing')}>
-              Get VoiceInk Pro →
+            <a href="#" onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/pricing')}>
+              {t('license.activate.getLink')}
             </a>
           </p>
         </div>
@@ -177,14 +180,14 @@ export const LicenseView: React.FC = () => {
       {/* Deactivate */}
       {licenseInfo.status === 'active' && (
         <div className="card">
-          <div className="card-title">License Management</div>
+          <div className="card-title">{t('license.management.title')}</div>
           <div className="setting-row">
             <div className="setting-label">
-              <span className="setting-name">License Key</span>
+              <span className="setting-name">{t('license.management.key')}</span>
               <span className="setting-description">{licenseInfo.key}</span>
             </div>
             <button className="btn btn-secondary" onClick={deactivateLicense}>
-              Deactivate
+              {t('license.management.deactivate')}
             </button>
           </div>
         </div>
@@ -192,21 +195,21 @@ export const LicenseView: React.FC = () => {
 
       {/* Feature Comparison */}
       <div className="card">
-        <div className="card-title">Feature Comparison</div>
+        <div className="card-title">{t('license.comparison.title')}</div>
         <table className="feature-table">
           <thead>
             <tr>
-              <th>Feature</th>
-              <th className="feature-col-center">Free</th>
+              <th>{t('license.comparison.feature')}</th>
+              <th className="feature-col-center">{t('license.comparison.free')}</th>
               <th className="feature-col-center">
-                Pro <span className="pro-badge-small">PRO</span>
+                {t('license.comparison.pro')} <span className="pro-badge-small">PRO</span>
               </th>
             </tr>
           </thead>
           <tbody>
             {FEATURES_COMPARISON.map(feature => (
-              <tr key={feature.name}>
-                <td>{feature.name}</td>
+              <tr key={feature.key}>
+                <td>{t(`license.comparison.features.${feature.key}`)}</td>
                 <td className="feature-col-center">
                   {feature.free ? '✅' : '—'}
                 </td>

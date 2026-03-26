@@ -27,6 +27,15 @@ export const IPC_CHANNELS = {
   TRANSCRIPTION_DELETE: 'transcription:delete',
   TRANSCRIPTION_GET: 'transcription:get',
 
+  // Streaming transcription (WebSocket real-time)
+  TRANSCRIPTION_STREAMING_PARTIAL: 'transcription:streamingPartial',
+  TRANSCRIPTION_STREAMING_STATUS: 'transcription:streamingStatus',
+
+  // Custom Speech API configuration
+  CUSTOM_SPEECH_GET_CONFIG: 'customSpeech:getConfig',
+  CUSTOM_SPEECH_SET_CONFIG: 'customSpeech:setConfig',
+  CUSTOM_SPEECH_TEST_CONNECTION: 'customSpeech:testConnection',
+
   // AI Enhancement
   ENHANCEMENT_TOGGLE: 'enhancement:toggle',
   ENHANCEMENT_SET_PROMPT: 'enhancement:setPrompt',

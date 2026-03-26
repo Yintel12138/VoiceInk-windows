@@ -82,6 +82,11 @@ class TranscriptionServiceRegistry {
             return model.name == "voxtral-mini-transcribe-realtime-2602"
         case .soniox:
             return model.name == "stt-rt-v4"
+        case .custom:
+            if let customModel = model as? CustomCloudModel {
+                return customModel.supportsWebSocketStreaming
+            }
+            return false
         default:
             return false
         }

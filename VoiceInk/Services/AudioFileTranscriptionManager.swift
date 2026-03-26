@@ -174,6 +174,9 @@ class AudioTranscriptionManager: ObservableObject {
     
     func cancelProcessing() {
         currentTask?.cancel()
+        currentTask = nil
+        isProcessing = false
+        processingPhase = .idle
     }
     
     private func finishProcessing() {
@@ -183,6 +186,13 @@ class AudioTranscriptionManager: ObservableObject {
     }
     
     private func handleError(_ error: Error) {
+        // For cancellation, clean up state silently without showing an error message
+        if error is CancellationError {
+            isProcessing = false
+            processingPhase = .idle
+            currentTask = nil
+            return
+        }
         logger.error("❌ Transcription error: \(error.localizedDescription, privacy: .public)")
         errorMessage = error.localizedDescription
         isProcessing = false

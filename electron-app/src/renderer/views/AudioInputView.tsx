@@ -9,6 +9,7 @@
  * - Device configuration
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AudioDevice } from '../../shared/types';
 
 declare global {
@@ -24,6 +25,7 @@ declare global {
 }
 
 export const AudioInputView: React.FC = () => {
+  const { t } = useTranslation();
   const [devices, setDevices] = useState<AudioDevice[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   const [audioLevel, setAudioLevel] = useState(0);
@@ -146,29 +148,28 @@ export const AudioInputView: React.FC = () => {
       <div className="view-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="view-title">Audio Input</h1>
+            <h1 className="view-title">{t('audioInput.title')}</h1>
             <p className="view-subtitle">
-              Select and configure your microphone for voice recording
+              {t('audioInput.subtitle')}
             </p>
           </div>
           <button className="btn btn-secondary" onClick={loadDevicesAndSelection} disabled={isLoading}>
-            🔄 Refresh Devices
+            {t('audioInput.refreshDevices')}
           </button>
         </div>
       </div>
 
-      {/* Device List */}
       <div className="card">
-        <div className="card-title">Input Devices</div>
+        <div className="card-title">{t('audioInput.inputDevices')}</div>
         {isLoading ? (
           <div className="empty-state">
-            <div className="empty-state-text">Loading audio devices...</div>
+            <div className="empty-state-text">{t('audioInput.loadingDevices')}</div>
           </div>
         ) : devices.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">🎤</div>
             <div className="empty-state-text">
-              No audio input devices found. Please connect a microphone and click Refresh.
+              {t('audioInput.noDevices')}
             </div>
           </div>
         ) : (
@@ -185,7 +186,7 @@ export const AudioInputView: React.FC = () => {
                 <div className="device-info">
                   <div className="device-name">{device.name}</div>
                   {device.isDefault && (
-                    <span className="badge badge-accent">Default</span>
+                    <span className="badge badge-accent">{t('audioInput.default')}</span>
                   )}
                 </div>
                 {selectedDeviceId === device.id && (
@@ -199,9 +200,9 @@ export const AudioInputView: React.FC = () => {
 
       {/* Audio Level Meter */}
       <div className="card">
-        <div className="card-title">Microphone Test</div>
+        <div className="card-title">{t('audioInput.micTest.title')}</div>
         <p className="setting-description" style={{ marginBottom: '16px' }}>
-          Test your microphone to verify it&apos;s working properly. Speak into your mic to see the audio level.
+          {t('audioInput.micTest.description')}
         </p>
         <div className="audio-level-container">
           <div className="audio-level-meter">
@@ -222,32 +223,32 @@ export const AudioInputView: React.FC = () => {
           onClick={toggleMicTest}
           style={{ marginTop: '12px' }}
         >
-          {isTestingMic ? '⏹ Stop Test' : '▶ Start Mic Test'}
+          {isTestingMic ? t('audioInput.micTest.stopTest') : t('audioInput.micTest.startTest')}
         </button>
       </div>
 
       {/* Device Settings */}
       <div className="card">
-        <div className="card-title">Device Settings</div>
+        <div className="card-title">{t('audioInput.deviceSettings.title')}</div>
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Sample Rate</span>
-            <span className="setting-description">Audio sample rate for recording (Hz)</span>
+            <span className="setting-name">{t('audioInput.deviceSettings.sampleRate')}</span>
+            <span className="setting-description">{t('audioInput.deviceSettings.sampleRateDesc')}</span>
           </div>
           <select className="select" defaultValue="16000">
-            <option value="16000">16,000 Hz (Recommended)</option>
-            <option value="44100">44,100 Hz</option>
-            <option value="48000">48,000 Hz</option>
+            <option value="16000">{t('audioInput.deviceSettings.sampleRate16k')}</option>
+            <option value="44100">{t('audioInput.deviceSettings.sampleRate44k')}</option>
+            <option value="48000">{t('audioInput.deviceSettings.sampleRate48k')}</option>
           </select>
         </div>
         <div className="setting-row">
           <div className="setting-label">
-            <span className="setting-name">Channels</span>
-            <span className="setting-description">Number of audio channels</span>
+            <span className="setting-name">{t('audioInput.deviceSettings.channels')}</span>
+            <span className="setting-description">{t('audioInput.deviceSettings.channelsDesc')}</span>
           </div>
           <select className="select" defaultValue="1">
-            <option value="1">Mono (Recommended)</option>
-            <option value="2">Stereo</option>
+            <option value="1">{t('audioInput.deviceSettings.mono')}</option>
+            <option value="2">{t('audioInput.deviceSettings.stereo')}</option>
           </select>
         </div>
       </div>

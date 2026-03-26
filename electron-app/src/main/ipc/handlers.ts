@@ -17,6 +17,7 @@ import { AIEnhancementService } from '../services/ai-enhancement-service';
 import { HotkeyService } from '../services/hotkey-service';
 import { TranscriptionPipeline } from '../services/transcription-pipeline';
 import { PowerModeService } from '../services/power-mode-service';
+import { CustomSpeechApiService } from '../services/custom-speech-api-service';
 import { WindowManager } from '../managers/window-manager';
 import { AppDefaultKey } from '../../shared/constants';
 import type { PowerModeConfig } from '../../shared/types';
@@ -32,6 +33,7 @@ export interface IPCDependencies {
   pipeline: TranscriptionPipeline;
   windowManager: WindowManager;
   powerModeService: PowerModeService;
+  customSpeechApiService?: CustomSpeechApiService;
 }
 
 export function registerIPCHandlers(deps: IPCDependencies): void {
@@ -46,6 +48,7 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
     pipeline,
     windowManager,
     powerModeService,
+    customSpeechApiService,
   } = deps;
 
   // --- Settings ---
@@ -385,5 +388,53 @@ export function registerIPCHandlers(deps: IPCDependencies): void {
     if (miniWin && !miniWin.isDestroyed()) {
       miniWin.webContents.send(IPC_CHANNELS.RECORDER_AUDIO_LEVEL, level);
     }
+  });
+
+  // --- Custom Speech API (WebSocket Streaming) ---
+  ipcMain.handle(IPC_CHANNELS.CUSTOM_SPEECH_GET_CONFIG, () => {
+    return {
+      enabled: settingsService.get('customSpeechApiEnabled'),
+      type: settingsService.get('customSpeechApiType'),
+      url: settingsService.get('customSpeechApiUrl'),
+      apiKey: settingsService.get('customSpeechApiKey'),
+    };
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.CUSTOM_SPEECH_SET_CONFIG,
+    (_event, config: {
+      enabled?: boolean;
+      type?: string;
+      url?: string;
+      apiKey?: string;
+    }) => {
+      if (config.enabled !== undefined) {
+        settingsService.set('customSpeechApiEnabled', config.enabled);
+      }
+      if (config.type !== undefined) {
+        settingsService.set('customSpeechApiType', config.type as 'http' | 'websocket');
+      }
+      if (config.url !== undefined) {
+        settingsService.set('customSpeechApiUrl', config.url);
+      }
+      if (config.apiKey !== undefined) {
+        settingsService.set('customSpeechApiKey', config.apiKey);
+      }
+      // Update the live service instance so new recordings use the latest config
+      if (customSpeechApiService) {
+        customSpeechApiService.updateConfig({
+          enabled: settingsService.get('customSpeechApiEnabled'),
+          type: settingsService.get('customSpeechApiType'),
+          url: settingsService.get('customSpeechApiUrl'),
+          apiKey: settingsService.get('customSpeechApiKey'),
+        });
+      }
+      return true;
+    }
+  );
+
+  ipcMain.handle(IPC_CHANNELS.CUSTOM_SPEECH_TEST_CONNECTION, async () => {
+    if (!customSpeechApiService) return false;
+    return customSpeechApiService.testConnection();
   });
 }

@@ -11,6 +11,7 @@ struct AddCustomModelCardView: View {
     @State private var apiKey = ""
     @State private var modelName = ""
     @State private var isMultilingual = true
+    @State private var streamingEndpoint = ""
     
     @State private var validationErrors: [String] = []
     @State private var showingAlert = false
@@ -30,6 +31,7 @@ struct AddCustomModelCardView: View {
                             apiKey = editing.apiKey
                             modelName = editing.modelName
                             isMultilingual = editing.isMultilingualModel
+                            streamingEndpoint = editing.streamingEndpoint ?? ""
                         } else {
                             // Pre-fill some default values when adding new
                             if apiEndpoint.isEmpty {
@@ -101,6 +103,23 @@ struct AddCustomModelCardView: View {
                         FormField(title: "API Endpoint", text: $apiEndpoint, placeholder: "https://api.example.com/v1/audio/transcriptions")
                         FormField(title: "API Key", text: $apiKey, placeholder: "your-api-key", isSecure: true)
                         FormField(title: "Model Name", text: $modelName, placeholder: "whisper-1")
+                        
+                        // Streaming WebSocket endpoint (optional)
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 4) {
+                                Text("Streaming WebSocket URL")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text("(optional)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            TextField("wss://api.example.com/v1/audio/stream", text: $streamingEndpoint)
+                                .textFieldStyle(.roundedBorder)
+                            Text("Leave empty to use batch transcription only. When provided, audio is streamed in real time via WebSocket for instant partial results.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         
                         Toggle("Multilingual Model", isOn: $isMultilingual)
                     }
@@ -178,6 +197,7 @@ struct AddCustomModelCardView: View {
                         apiKey = editing.apiKey
                         modelName = editing.modelName
                         isMultilingual = editing.isMultilingualModel
+                        streamingEndpoint = editing.streamingEndpoint ?? ""
                     }
                 }
             }
@@ -197,6 +217,7 @@ struct AddCustomModelCardView: View {
         apiKey = ""
         modelName = ""
         isMultilingual = true
+        streamingEndpoint = ""
     }
     
     private func addModel() {
@@ -225,6 +246,9 @@ struct AddCustomModelCardView: View {
         isSaving = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let trimmedStreamingEndpoint = self.streamingEndpoint.trimmingCharacters(in: .whitespacesAndNewlines)
+            let streamingEndpointValue = trimmedStreamingEndpoint.isEmpty ? nil : trimmedStreamingEndpoint
+
             if let editing = editingModel {
                 let updatedModel = CustomCloudModel(
                     id: editing.id,
@@ -233,7 +257,8 @@ struct AddCustomModelCardView: View {
                     description: "Custom transcription model",
                     apiEndpoint: trimmedApiEndpoint,
                     modelName: trimmedModelName,
-                    isMultilingual: isMultilingual
+                    isMultilingual: isMultilingual,
+                    streamingEndpoint: streamingEndpointValue
                 )
                 
                 if APIKeyManager.shared.saveCustomModelAPIKey(trimmedApiKey, forModelId: editing.id) {
@@ -251,7 +276,8 @@ struct AddCustomModelCardView: View {
                     description: "Custom transcription model",
                     apiEndpoint: trimmedApiEndpoint,
                     modelName: trimmedModelName,
-                    isMultilingual: isMultilingual
+                    isMultilingual: isMultilingual,
+                    streamingEndpoint: streamingEndpointValue
                 )
                 
                 if APIKeyManager.shared.saveCustomModelAPIKey(trimmedApiKey, forModelId: customModel.id) {

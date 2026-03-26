@@ -4,9 +4,11 @@
  * DashboardPromotionsSection, and HelpAndResourcesSection.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Transcription } from '../../shared/models/transcription';
 
 export const MetricsView: React.FC = () => {
+  const { t } = useTranslation();
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [appVersion, setAppVersion] = useState('');
@@ -52,12 +54,12 @@ export const MetricsView: React.FC = () => {
   }, []);
 
   const totalTranscriptions = transcriptions.length;
-  const totalDuration = transcriptions.reduce((sum, t) => sum + (t.duration || 0), 0);
+  const totalDuration = transcriptions.reduce((sum, tr) => sum + (tr.duration || 0), 0);
   const totalWords = transcriptions.reduce(
-    (sum, t) => sum + (t.text?.split(/\s+/).filter(Boolean).length || 0),
+    (sum, tr) => sum + (tr.text?.split(/\s+/).filter(Boolean).length || 0),
     0
   );
-  const enhancedCount = transcriptions.filter((t) => t.enhancedText).length;
+  const enhancedCount = transcriptions.filter((tr) => tr.enhancedText).length;
 
   const avgWordsPerTranscription = totalTranscriptions > 0
     ? Math.round(totalWords / totalTranscriptions) : 0;
@@ -76,10 +78,10 @@ export const MetricsView: React.FC = () => {
     return (
       <div className="view-container">
         <div className="view-header">
-          <h1 className="view-title">Dashboard</h1>
+          <h1 className="view-title">{t('dashboard.title')}</h1>
         </div>
         <div className="empty-state">
-          <div className="empty-state-text">Loading...</div>
+          <div className="empty-state-text">{t('dashboard.loading')}</div>
         </div>
       </div>
     );
@@ -88,8 +90,8 @@ export const MetricsView: React.FC = () => {
   return (
     <div className="view-container">
       <div className="view-header">
-        <h1 className="view-title">Dashboard</h1>
-        <p className="view-subtitle">Your transcription activity at a glance</p>
+        <h1 className="view-title">{t('dashboard.title')}</h1>
+        <p className="view-subtitle">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Trial message banner */}
@@ -100,12 +102,12 @@ export const MetricsView: React.FC = () => {
           </div>
           <div className="trial-banner-text">
             {trialDaysRemaining <= 3
-              ? `Trial expires in ${trialDaysRemaining} days — activate a license to keep Pro features.`
-              : `${trialDaysRemaining} days remaining in your trial. Enjoy all Pro features!`
+              ? t('dashboard.trial.expiringSoon', { days: trialDaysRemaining })
+              : t('dashboard.trial.remaining', { days: trialDaysRemaining })
             }
           </div>
           <button className="btn btn-primary btn-small" onClick={() => navigateTo('license')}>
-            Add License Key
+            {t('dashboard.trial.addLicense')}
           </button>
         </div>
       )}
@@ -113,29 +115,29 @@ export const MetricsView: React.FC = () => {
       {/* Setup prompt for first-time users */}
       {!hasCompletedOnboarding && totalTranscriptions === 0 && (
         <div className="card setup-card">
-          <div className="card-title">🚀 Get Started with VoiceInk</div>
+          <div className="card-title">{t('dashboard.getStarted.title')}</div>
           <div className="setup-steps">
             <div className="setup-step" onClick={() => navigateTo('permissions')}>
               <div className="setup-step-icon">🔒</div>
               <div className="setup-step-info">
-                <div className="setup-step-title">1. Grant Permissions</div>
-                <div className="setup-step-description">Allow microphone access and set up keyboard shortcuts</div>
+                <div className="setup-step-title">{t('dashboard.getStarted.step1Title')}</div>
+                <div className="setup-step-description">{t('dashboard.getStarted.step1Desc')}</div>
               </div>
               <span className="setup-step-arrow">→</span>
             </div>
             <div className="setup-step" onClick={() => navigateTo('models')}>
               <div className="setup-step-icon">🤖</div>
               <div className="setup-step-info">
-                <div className="setup-step-title">2. Download a Model</div>
-                <div className="setup-step-description">Choose and download a transcription model</div>
+                <div className="setup-step-title">{t('dashboard.getStarted.step2Title')}</div>
+                <div className="setup-step-description">{t('dashboard.getStarted.step2Desc')}</div>
               </div>
               <span className="setup-step-arrow">→</span>
             </div>
             <div className="setup-step" onClick={() => navigateTo('settings')}>
               <div className="setup-step-icon">⚙️</div>
               <div className="setup-step-info">
-                <div className="setup-step-title">3. Configure Settings</div>
-                <div className="setup-step-description">Set up hotkeys, language, and recording preferences</div>
+                <div className="setup-step-title">{t('dashboard.getStarted.step3Title')}</div>
+                <div className="setup-step-description">{t('dashboard.getStarted.step3Desc')}</div>
               </div>
               <span className="setup-step-arrow">→</span>
             </div>
@@ -148,49 +150,49 @@ export const MetricsView: React.FC = () => {
         <div className="metric-card">
           <div className="metric-icon">📝</div>
           <div className="metric-value">{totalTranscriptions}</div>
-          <div className="metric-label">Total Transcriptions</div>
+          <div className="metric-label">{t('dashboard.metrics.totalTranscriptions')}</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-icon">📊</div>
           <div className="metric-value">{totalWords.toLocaleString()}</div>
-          <div className="metric-label">Words Transcribed</div>
+          <div className="metric-label">{t('dashboard.metrics.wordsTranscribed')}</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-icon">⏱️</div>
           <div className="metric-value">{formatDuration(totalDuration)}</div>
-          <div className="metric-label">Total Recording Time</div>
+          <div className="metric-label">{t('dashboard.metrics.totalRecordingTime')}</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-icon">✨</div>
           <div className="metric-value">{enhancedCount}</div>
-          <div className="metric-label">AI Enhanced</div>
+          <div className="metric-label">{t('dashboard.metrics.aiEnhanced')}</div>
         </div>
       </div>
 
       {/* Performance Analysis */}
       {totalTranscriptions > 0 && (
         <div className="card">
-          <div className="card-title">📈 Performance Analysis</div>
+          <div className="card-title">{t('dashboard.performance.title')}</div>
           <div className="analysis-grid">
             <div className="analysis-item">
-              <div className="analysis-label">Avg. Words per Transcription</div>
+              <div className="analysis-label">{t('dashboard.performance.avgWords')}</div>
               <div className="analysis-value">{avgWordsPerTranscription}</div>
             </div>
             <div className="analysis-item">
-              <div className="analysis-label">Avg. Duration</div>
+              <div className="analysis-label">{t('dashboard.performance.avgDuration')}</div>
               <div className="analysis-value">{formatDuration(avgDurationPerTranscription)}</div>
             </div>
             <div className="analysis-item">
-              <div className="analysis-label">Enhancement Rate</div>
+              <div className="analysis-label">{t('dashboard.performance.enhancementRate')}</div>
               <div className="analysis-value">
                 {totalTranscriptions > 0 ? Math.round((enhancedCount / totalTranscriptions) * 100) : 0}%
               </div>
             </div>
             <div className="analysis-item">
-              <div className="analysis-label">Words per Minute</div>
+              <div className="analysis-label">{t('dashboard.performance.wordsPerMinute')}</div>
               <div className="analysis-value">
                 {totalDuration > 0 ? Math.round(totalWords / (totalDuration / 60)) : 0}
               </div>
@@ -204,14 +206,14 @@ export const MetricsView: React.FC = () => {
         <div className="empty-state">
           <div className="empty-state-icon">🎙️</div>
           <div className="empty-state-text">
-            No transcriptions yet. Start recording to see your stats here.
+            {t('dashboard.empty')}
           </div>
         </div>
       )}
 
       {/* Help & Resources */}
       <div className="card">
-        <div className="card-title">💡 Help & Resources</div>
+        <div className="card-title">{t('dashboard.help.title')}</div>
         <div className="help-links">
           <a
             className="help-link"
@@ -219,7 +221,7 @@ export const MetricsView: React.FC = () => {
             onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/docs')}
           >
             <span className="help-link-icon">📖</span>
-            <span className="help-link-text">Documentation</span>
+            <span className="help-link-text">{t('dashboard.help.docs')}</span>
             <span className="help-link-arrow">→</span>
           </a>
           <a
@@ -228,7 +230,7 @@ export const MetricsView: React.FC = () => {
             onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/support')}
           >
             <span className="help-link-icon">💬</span>
-            <span className="help-link-text">Support</span>
+            <span className="help-link-text">{t('dashboard.help.support')}</span>
             <span className="help-link-arrow">→</span>
           </a>
           <a
@@ -237,7 +239,7 @@ export const MetricsView: React.FC = () => {
             onClick={() => window.voiceink?.app?.openExternal('https://voiceink.app/changelog')}
           >
             <span className="help-link-icon">📋</span>
-            <span className="help-link-text">What&apos;s New</span>
+            <span className="help-link-text">{t('dashboard.help.whatsNew')}</span>
             <span className="help-link-arrow">→</span>
           </a>
           <a
@@ -246,7 +248,7 @@ export const MetricsView: React.FC = () => {
             onClick={() => window.voiceink?.app?.openExternal('mailto:support@voiceink.app')}
           >
             <span className="help-link-icon">✉️</span>
-            <span className="help-link-text">Email Support</span>
+            <span className="help-link-text">{t('dashboard.help.emailSupport')}</span>
             <span className="help-link-arrow">→</span>
           </a>
         </div>
@@ -254,7 +256,7 @@ export const MetricsView: React.FC = () => {
 
       {appVersion && (
         <div className="app-version-footer">
-          VoiceInk v{appVersion}
+          {t('dashboard.version', { version: appVersion })}
         </div>
       )}
     </div>

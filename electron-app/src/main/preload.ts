@@ -49,6 +49,32 @@ const api = {
       return () =>
         ipcRenderer.removeListener(IPC_CHANNELS.TRANSCRIPTION_ERROR, listener);
     },
+    /** Called with each partial transcript text during WebSocket streaming. */
+    onStreamingPartialResult: (callback: (text: string) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, text: string) => {
+        callback(text);
+      };
+      ipcRenderer.on(IPC_CHANNELS.TRANSCRIPTION_STREAMING_PARTIAL, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSCRIPTION_STREAMING_PARTIAL, listener);
+    },
+    /** Called when the WebSocket streaming connection status changes. */
+    onStreamingStatus: (callback: (status: 'connected' | 'disconnected' | 'error') => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, status: 'connected' | 'disconnected' | 'error') => {
+        callback(status);
+      };
+      ipcRenderer.on(IPC_CHANNELS.TRANSCRIPTION_STREAMING_STATUS, listener);
+      return () =>
+        ipcRenderer.removeListener(IPC_CHANNELS.TRANSCRIPTION_STREAMING_STATUS, listener);
+    },
+  },
+
+  // --- Custom Speech API ---
+  customSpeech: {
+    getConfig: () => ipcRenderer.invoke(IPC_CHANNELS.CUSTOM_SPEECH_GET_CONFIG),
+    setConfig: (config: { enabled?: boolean; type?: string; url?: string; apiKey?: string }) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CUSTOM_SPEECH_SET_CONFIG, config),
+    testConnection: () => ipcRenderer.invoke(IPC_CHANNELS.CUSTOM_SPEECH_TEST_CONNECTION),
   },
 
   // --- Recorder ---

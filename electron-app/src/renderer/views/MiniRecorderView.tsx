@@ -4,12 +4,15 @@
  *
  * Displayed in a frameless, always-on-top window.
  * Shows record button, audio level visualization, prompt selector,
- * power mode indicator, and enhancement toggle.
+ * power mode indicator, enhancement toggle, and real-time streaming
+ * partial transcription text when WebSocket streaming is enabled.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { RecordingState, AudioLevel } from '../../shared/types';
 
 export const MiniRecorderView: React.FC = () => {
+  const { t } = useTranslation();
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [audioLevel, setAudioLevel] = useState<AudioLevel>({
     averagePower: 0,
@@ -20,6 +23,9 @@ export const MiniRecorderView: React.FC = () => {
   const [currentPowerMode, setCurrentPowerMode] = useState<string | null>(null);
   const [showPromptMenu, setShowPromptMenu] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [streamingText, setStreamingText] = useState('');
+  const [streamingStatus, setStreamingStatus] = useState<'idle' | 'connected' | 'disconnected' | 'error'>('idle');
+  const streamingTextRef = useRef('');
 
   useEffect(() => {
     // Listen for recording state changes
@@ -28,6 +34,12 @@ export const MiniRecorderView: React.FC = () => {
         setRecordingState(state as RecordingState);
         if (state === 'idle') {
           setElapsedSeconds(0);
+          // Clear streaming text a moment after recording ends
+          setTimeout(() => {
+            setStreamingText('');
+            streamingTextRef.current = '';
+            setStreamingStatus('idle');
+          }, 1500);
         }
       });
 
@@ -40,6 +52,24 @@ export const MiniRecorderView: React.FC = () => {
         unsubLevel();
       };
     }
+  }, []);
+
+  // Subscribe to streaming partial results
+  useEffect(() => {
+    const unsubPartial = window.voiceink?.transcriptions?.onStreamingPartialResult?.((text: string) => {
+      streamingTextRef.current = text;
+      setStreamingText(text);
+    });
+
+    const unsubStatus = window.voiceink?.transcriptions?.onStreamingStatus?.((status) => {
+      setStreamingStatus(status === 'connected' ? 'connected' :
+        status === 'error' ? 'error' : 'disconnected');
+    });
+
+    return () => {
+      unsubPartial?.();
+      unsubStatus?.();
+    };
   }, []);
 
   // Timer for recording duration
@@ -99,11 +129,11 @@ export const MiniRecorderView: React.FC = () => {
       case 'recording':
         return formatTime(elapsedSeconds);
       case 'transcribing':
-        return 'Transcribing...';
+        return t('miniRecorder.transcribing');
       case 'enhancing':
-        return 'Enhancing...';
+        return t('miniRecorder.enhancing');
       default:
-        return 'Ready';
+        return t('miniRecorder.ready');
     }
   };
 
@@ -130,7 +160,15 @@ export const MiniRecorderView: React.FC = () => {
     return height;
   });
 
-  const PROMPTS = ['Fix Grammar', 'Professional', 'Casual', 'Summarize'];
+  const PROMPTS = [
+    t('miniRecorder.prompts.fixGrammar'),
+    t('miniRecorder.prompts.professional'),
+    t('miniRecorder.prompts.casual'),
+    t('miniRecorder.prompts.summarize'),
+  ];
+
+  // Determine if we should show the streaming text panel
+  const showStreamingPanel = recordingState === 'recording' && streamingText.trim().length > 0;
 
   return (
     <div className="mini-recorder">
@@ -176,7 +214,7 @@ export const MiniRecorderView: React.FC = () => {
         <button
           className={`mini-recorder-enhancement ${isEnhancementEnabled ? 'active' : ''}`}
           onClick={toggleEnhancement}
-          title={isEnhancementEnabled ? 'AI Enhancement: ON' : 'AI Enhancement: OFF'}
+          title={isEnhancementEnabled ? t('miniRecorder.enhancementOn') : t('miniRecorder.enhancementOff')}
         >
           ✨
         </button>
@@ -205,6 +243,21 @@ export const MiniRecorderView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Real-time Streaming Transcription Panel */}
+      {showStreamingPanel && (
+        <div className="mini-recorder-streaming-panel">
+          <div className="mini-recorder-streaming-indicator">
+            <span
+              className={`streaming-dot ${streamingStatus === 'error' ? 'error' : 'active'}`}
+            />
+            <span className="streaming-label">
+              {streamingStatus === 'error' ? t('miniRecorder.streamingError') : t('miniRecorder.streaming')}
+            </span>
+          </div>
+          <p className="mini-recorder-streaming-text">{streamingText}</p>
+        </div>
+      )}
     </div>
   );
 };

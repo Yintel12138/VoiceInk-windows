@@ -9,6 +9,7 @@
  * - Refresh button with animation
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PermissionStatus {
   id: string;
@@ -20,6 +21,7 @@ interface PermissionStatus {
 }
 
 export const PermissionsView: React.FC = () => {
+  const { t } = useTranslation();
   const [permissions, setPermissions] = useState<PermissionStatus[]>([
     {
       id: 'microphone',
@@ -151,10 +153,9 @@ export const PermissionsView: React.FC = () => {
       <div className="view-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="view-title">🛡️ Permissions</h1>
+            <h1 className="view-title">{t('permissions.title')}</h1>
             <p className="view-subtitle">
-              VoiceInk needs certain permissions to function properly.
-              Grant the required permissions below.
+              {t('permissions.subtitle')}
             </p>
           </div>
           <button
@@ -162,7 +163,7 @@ export const PermissionsView: React.FC = () => {
             onClick={checkPermissions}
             disabled={isRefreshing}
           >
-            🔄 Refresh
+            {t('permissions.refresh')}
           </button>
         </div>
       </div>
@@ -184,7 +185,7 @@ export const PermissionsView: React.FC = () => {
                   className="btn btn-primary btn-small"
                   onClick={() => requestPermission(permission.id)}
                 >
-                  {permission.id === 'keyboard-shortcut' ? 'Configure →' : 'Grant Access →'}
+                  {permission.id === 'keyboard-shortcut' ? t('permissions.configure') : t('permissions.grantAccess')}
                 </button>
               )}
             </div>
@@ -193,12 +194,12 @@ export const PermissionsView: React.FC = () => {
       ))}
 
       <div className="card" style={{ marginTop: '24px' }}>
-        <div className="card-title">ℹ️ About Permissions</div>
+        <div className="card-title">{t('permissions.about.title')}</div>
         <div className="setting-description" style={{ lineHeight: 1.6, fontSize: '13px' }}>
-          <p><strong>Microphone:</strong> Essential for recording your voice for transcription.</p>
-          <p><strong>Accessibility:</strong> Needed to paste transcribed text directly into apps. On macOS, enable in System Preferences → Privacy & Security → Accessibility.</p>
-          <p><strong>Screen Recording:</strong> Optional — allows VoiceInk to capture screen context for smarter AI enhancements.</p>
-          <p><strong>Keyboard Shortcut:</strong> Configure global hotkeys to start/stop recording from any application.</p>
+          <p dangerouslySetInnerHTML={{ __html: t('permissions.about.microphone') }} />
+          <p dangerouslySetInnerHTML={{ __html: t('permissions.about.accessibility') }} />
+          <p dangerouslySetInnerHTML={{ __html: t('permissions.about.screenRecording') }} />
+          <p dangerouslySetInnerHTML={{ __html: t('permissions.about.keyboardShortcut') }} />
         </div>
       </div>
     </div>
