@@ -174,6 +174,15 @@ class StreamingTranscriptionService {
             return MistralStreamingProvider()
         case .soniox:
             return SonioxStreamingProvider(modelContext: modelContext)
+        case .custom:
+            guard
+                let customModel = model as? CustomCloudModel,
+                let urlString = customModel.streamingEndpoint, !urlString.isEmpty,
+                let wsURL = URL(string: urlString)
+            else {
+                fatalError("Custom model has no valid streaming endpoint. Check supportsStreaming() before calling startStreaming().")
+            }
+            return CustomWebSocketStreamingProvider(wsURL: wsURL, apiKey: customModel.apiKey)
         default:
             fatalError("Unsupported streaming provider: \(model.provider). Check supportsStreaming() before calling startStreaming().")
         }
