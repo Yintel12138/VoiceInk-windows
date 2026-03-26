@@ -525,7 +525,9 @@
       "professional": "Professional",
       "casual": "Casual",
       "summarize": "Summarize"
-    }
+    },
+    "streaming": "Streaming...",
+    "streamingError": "Streaming error"
   },
   "transcribeAudio": {
     "title": "Transcribe Audio",

@@ -36,6 +36,7 @@ export class AudioRecordingService {
   private stateListeners: Array<(state: RecordingState) => void> = [];
   private audioLevelListeners: Array<(level: AudioLevel) => void> = [];
   private completeListeners: Array<(filePath: string, duration: number) => void> = [];
+  private audioChunkListeners: Array<(chunk: Buffer) => void> = [];
   private ipcRegistered: boolean = false;
   private useRealAudioLevels: boolean = false;
 
@@ -125,6 +126,9 @@ export class AudioRecordingService {
   receiveAudioChunk(chunk: Buffer): void {
     if (this.state !== 'recording') return;
     this.audioChunks.push(chunk);
+    for (const listener of this.audioChunkListeners) {
+      listener(chunk);
+    }
   }
 
   /**
@@ -259,6 +263,18 @@ export class AudioRecordingService {
     return () => {
       const idx = this.completeListeners.indexOf(listener);
       if (idx >= 0) this.completeListeners.splice(idx, 1);
+    };
+  }
+
+  /**
+   * Register audio chunk listener. Called for every PCM chunk received during recording.
+   * Used by the streaming pipeline to forward chunks to a WebSocket server.
+   */
+  onAudioChunk(listener: (chunk: Buffer) => void): () => void {
+    this.audioChunkListeners.push(listener);
+    return () => {
+      const idx = this.audioChunkListeners.indexOf(listener);
+      if (idx >= 0) this.audioChunkListeners.splice(idx, 1);
     };
   }
 

@@ -22,6 +22,7 @@ import { AIEnhancementService } from './services/ai-enhancement-service';
 import { HotkeyService } from './services/hotkey-service';
 import { TranscriptionPipeline } from './services/transcription-pipeline';
 import { PowerModeService } from './services/power-mode-service';
+import { CustomSpeechApiService } from './services/custom-speech-api-service';
 import { WindowManager } from './managers/window-manager';
 import { TrayManager } from './managers/tray-manager';
 import { registerIPCHandlers } from './ipc/handlers';
@@ -60,6 +61,14 @@ const aiService = new AIEnhancementService(
 
 const powerModeService = new PowerModeService();
 
+// Initialize custom speech API service (WebSocket streaming support)
+const customSpeechApiService = new CustomSpeechApiService({
+  enabled: settingsService.get('customSpeechApiEnabled'),
+  type: settingsService.get('customSpeechApiType'),
+  url: settingsService.get('customSpeechApiUrl'),
+  apiKey: settingsService.get('customSpeechApiKey'),
+});
+
 const hotkeyService = new HotkeyService({
   selectedHotkey1: settingsService.get('selectedHotkey1'),
   selectedHotkey2: settingsService.get('selectedHotkey2'),
@@ -77,6 +86,7 @@ const pipeline = new TranscriptionPipeline({
   dictionaryService,
   transcriptionStore,
   settingsService,
+  customSpeechApiService,
 });
 
 // Restore AI service state from settings
@@ -175,6 +185,7 @@ app.whenReady().then(() => {
     pipeline,
     windowManager,
     powerModeService,
+    customSpeechApiService,
   });
 
   // Register audio IPC handlers for receiving audio data from renderer

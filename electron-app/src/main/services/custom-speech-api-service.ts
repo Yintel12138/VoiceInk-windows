@@ -89,7 +89,7 @@ export class CustomSpeechApiService {
       this.activeWebSocket.close();
       this.activeWebSocket = null;
     }
-    const wsUrl = this.config.url.replace(/^http/, 'ws');
+    const wsUrl = this.config.url.replace(/^https?/, (m) => m === 'https' ? 'wss' : 'ws');
     const headers: Record<string, string> = {};
     if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     if (language) headers['X-Language'] = language;
@@ -189,7 +189,7 @@ export class CustomSpeechApiService {
       try {
         const wsUrl = this.config.url.startsWith('ws')
           ? this.config.url
-          : this.config.url.replace(/^http/, 'ws');
+          : this.config.url.replace(/^https?/, (m) => m === 'https' ? 'wss' : 'ws');
         const ws = new WebSocket(wsUrl, {
           headers: this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {},
         });

@@ -525,7 +525,9 @@
       "professional": "专业版",
       "casual": "随意风格",
       "summarize": "摘要"
-    }
+    },
+    "streaming": "实时转写中...",
+    "streamingError": "流式转写错误"
   },
   "transcribeAudio": {
     "title": "转录音频",
