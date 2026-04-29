@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'copilot/merge-latest-commit-from-voiceink'
   workflow_dispatch:
     inputs:
       draft:
